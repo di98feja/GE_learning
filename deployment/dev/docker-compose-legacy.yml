@@ -1,0 +1,39 @@
+# deployment/dev/docker-compose-legacy.yml
+# Legacy-only environment for validating YAML packages
+version: '3.8'
+services:
+  homeassistant:
+    image: homeassistant/home-assistant:latest
+    container_name: gridenforcr-legacy
+    volumes:
+      - ./configuration-legacy:/config
+      - ha_config_legacy:/config/storage
+    ports:
+      - "8124:8123"  # Different port to avoid conflicts
+    environment:
+      - TZ=Europe/Stockholm
+    depends_on:
+      - mosquitto
+      - mariadb
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1884:1883"  # Different port
+    volumes:
+      - mosquitto_data_legacy:/mosquitto/data
+
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: homeassistant
+      MYSQL_DATABASE: homeassistant_legacy
+    ports:
+      - "3307:3306"  # Different port
+    volumes:
+      - mariadb_data_legacy:/var/lib/mysql
+
+volumes:
+  ha_config_legacy:
+  mosquitto_data_legacy:
+  mariadb_data_legacy:

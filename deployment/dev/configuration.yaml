@@ -1,0 +1,57 @@
+# deployment/dev/configuration/configuration.yaml
+# Development Home Assistant configuration
+
+homeassistant:
+  name: GridEnforcer Development
+  latitude: 57.7089
+  longitude: 11.9746
+  elevation: 0
+  unit_system: metric
+  time_zone: Europe/Stockholm
+  
+  # Load legacy packages for development
+  packages: !include_dir_named packages
+
+# Enable development features
+default_config:
+
+# Development logging
+logger:
+  default: info
+  logs:
+    custom_components.gridenforcr: debug
+    homeassistant.components.modbus: debug
+
+# Database configuration
+recorder:
+  db_url: mysql://ha:ha_password@mariadb/homeassistant
+  purge_keep_days: 7  # Short retention for development
+
+# MQTT for Flower communication
+mqtt:
+  broker: mosquitto
+  port: 1883
+  username: ""
+  password: ""
+
+# Modbus for Solax communication
+modbus:
+  - name: solax1
+    type: tcp
+    host: solax-mock
+    port: 502
+    
+  - name: solax2  
+    type: tcp
+    host: solax-mock
+    port: 502
+    
+  - name: solax3
+    type: tcp
+    host: solax-mock
+    port: 502
+
+# Enable the new Python integration (development)
+gridenforcr:
+  development_mode: true
+  legacy_packages_active: true

@@ -1,0 +1,49 @@
+# .github/workflows/deploy-dev.yml
+name: Deploy Development Environment
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Development environment'
+        required: true
+        default: 'local-dev'
+        type: choice
+        options:
+        - local-dev
+        - shared-dev
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: development  # Requires approval for shared-dev
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Deploy to local dev containers
+      if: github.event.inputs.environment == 'local-dev' || github.event.inputs.environment == ''
+      run: |
+        echo "Deploying to local development containers..."
+        
+        # This would typically just validate the docker-compose files
+        docker-compose -f deployment/dev/docker-compose.yml config
+        
+        echo "✓ Development configuration validated"
+        echo "Developers can run: docker-compose -f deployment/dev/docker-compose.yml up"
+    
+    - name: Deploy to shared dev environment
+      if: github.event.inputs.environment == 'shared-dev'
+      run: |
+        echo "⚠️  This would deploy to shared development infrastructure"
+        echo "Current configuration: DRY RUN ONLY"
+        
+        # For now, just echo what would happen
+        echo "Would execute:"
+        echo "- docker-compose up on dev server"
+        echo "- Update shared dev environment"
+        echo "- Notify team of deployment"
+        
+        # TODO: Implement actual shared dev deployment when ready

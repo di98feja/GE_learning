@@ -1,0 +1,76 @@
+# deployment/dev/docker-compose.yml
+version: '3.8'
+services:
+  homeassistant:
+    image: homeassistant/home-assistant:latest
+    container_name: gridenforcr-dev
+    volumes:
+      - ./configuration:/config
+      - ../../custom_components:/config/custom_components
+      - ha_config:/config/storage
+    ports:
+      - "8123:8123"
+    environment:
+      - TZ=Europe/Stockholm
+    depends_on:
+      - mosquitto
+      - mariadb
+      - solax-mock
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: gridenforcr-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+
+  mariadb:
+    image: mariadb:latest
+    container_name: gridenforcr-db
+    environment:
+      MYSQL_ROOT_PASSWORD: homeassistant
+      MYSQL_DATABASE: homeassistant
+      MYSQL_USER: ha
+      MYSQL_PASSWORD: ha_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  # Mock Solax inverter for development
+  solax-mock:
+    build: ./mocks/solax
+    container_name: gridenforcr-solax-mock
+    ports:
+      - "502:502"  # Modbus TCP
+    environment:
+      - DEVICE_COUNT=3  # Simulate 3 inverters
+      - SOC_SIMULATION=true
+      - POWER_SIMULATION=true
+
+  # Mock Flower FCR-D service
+  flower-mock:
+    build: ./mocks/flower
+    container_name: gridenforcr-flower-mock
+    environment:
+      - MQTT_BROKER=mosquitto
+      - SIMULATE_DISPATCH=true
+    depends_on:
+      - mosquitto
+
+  # Development tools
+  adminer:
+    image: adminer
+    container_name: gridenforcr-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mariadb
+
+volumes:
+  ha_config:
+  mosquitto_data:
+  mariadb_data:
