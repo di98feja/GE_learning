@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   home-assistant:
     build:
@@ -7,6 +9,7 @@ services:
     restart: unless-stopped
     privileged: true
     network_mode: host
+    user: "1000:1000"  # ge_admin user
     volumes:
       - ./config:/config
       - ./custom_components:/config/custom_components
@@ -15,7 +18,7 @@ services:
     environment:
       - TZ=Europe/Stockholm
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8123/api/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8123/"]
       interval: 30s
       timeout: 10s
       retries: 3

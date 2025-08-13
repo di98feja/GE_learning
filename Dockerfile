@@ -1,34 +1,45 @@
 FROM homeassistant/home-assistant:stable
 
-# Install additional system dependencies
+# Install additional system dependencies (Alpine Linux - uses apk)
 USER root
-RUN apt-get update && apt-get install -y \
-    build-essential \
+
+# Install system packages
+RUN apk add --no-cache \
+    build-base \
     python3-dev \
     libffi-dev \
-    libssl-dev \
-    libjpeg-dev \
-    zlib1g-dev \
+    openssl-dev \
+    jpeg-dev \
+    zlib-dev \
     autoconf \
-    build-essential \
-    libopenjp2-7 \
-    libtiff5 \
-    libturbojpeg0-dev \
+    openjpeg-dev \
+    tiff-dev \
+    libjpeg-turbo-dev \
     tzdata \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    gcc \
+    musl-dev \
+    shadow
 
-# Switch back to the homeassistant user
-USER abc
+# Create ge_admin user with proper permissions
+RUN adduser -D -s /bin/ash -u 1000 ge_admin && \
+    addgroup ge_admin dialout && \
+    addgroup ge_admin audio
 
-# Copy requirements file for additional Python packages
+# Create config directory and set permissions
+RUN mkdir -p /config && \
+    chown -R ge_admin:ge_admin /config
+
+# Copy requirements file and install Python packages as root
 COPY requirements.txt /tmp/requirements.txt
-
-# Install additional Python packages
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy custom components
+# Copy custom components and set ownership
 COPY custom_components/ /config/custom_components/
+RUN chown -R ge_admin:ge_admin /config/custom_components/
+
+# Switch to ge_admin user
+USER ge_admin
 
 # Set the working directory
 WORKDIR /config

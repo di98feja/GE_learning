@@ -32,3 +32,6 @@ pre-commit>=3.0.0
 
 # Logging and monitoring
 structlog>=23.0.0
+
+# Additional testing support
+pytest-mock>=3.10.0
