@@ -1,0 +1,22 @@
+homeassistant:
+  name: Grid Enforcer Test
+  latitude: 59.3293
+  longitude: 18.0686
+  elevation: 0
+  unit_system: metric
+  time_zone: Europe/Stockholm
+  
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    
+logger:
+  default: info
+  logs:
+    custom_components.grid_enforcer: debug
+    
+# Grid Enforcer Integration (placeholder)
+grid_enforcer:
+  # Configuration will be added during development
+  

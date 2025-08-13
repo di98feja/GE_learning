@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Home Assistant
+config/.*
+config/deps/
+config/tts/
+config/secrets.yaml
+config/known_devices.yaml
+config/entity_registry.yaml
+config/device_registry.yaml
+config/.storage/
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs
+*.log
+mosquitto/data/*
+mosquitto/log/*
+
+# OS
+.DS_Store
+Thumbs.db
