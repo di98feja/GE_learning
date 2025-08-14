@@ -1,0 +1,162 @@
+# MIT License
+#
+# Copyright (c) 2021-2024 Reik Steinert, Mikael Andersson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+solax1_scripts:
+  script:
+    configure_inverter_solax1:
+      alias: Configure Inverter Solax1
+      sequence:
+        # UnlockPassword
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 0
+            value: 2014
+        # Delay
+        - delay: "00:00:01"
+
+        # SelfUse_Discharge_MinSoC
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 97
+            value: 10
+        # Delay
+        - delay: "00:00:01"
+
+        # SelfUse_NightCharge_Enable
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 98
+            value: 0
+        # Delay
+        - delay: "00:00:01"
+
+        # SelfUse_NightCharge_UpperSoC
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 99
+            value: 10
+        # Delay
+        - delay: "00:00:01"
+
+        # Feedin_NightCharge_UpperSoC
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 100
+            value: 10
+        # Delay
+        - delay: "00:00:01"
+
+        # Feedin_Discharge_MinSoC
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 101
+            value: 10
+        # Delay
+        - delay: "00:00:01"
+
+        # BackUp_NightCharge_UpperSoC
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 102
+            value: 30
+        # Delay
+        - delay: "00:00:01"
+
+        # BackUp_Discharge_MinSoC
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 103
+            value: 15
+        # Delay
+        - delay: "00:00:01"
+
+        # NightCharge_Period1_StartTime
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 104
+            value: 0
+        # Delay
+        - delay: "00:00:01"
+
+        # NightCharge_Period1_EndTime
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 105
+            value: 0
+        # Delay
+        - delay: "00:00:01"
+
+        # Discharge_Period1_StartTime
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 106
+            value: 0
+        # Delay
+        - delay: "00:00:01"
+
+        # Discharge_Period1_EndTime
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 107
+            value: 5947
+        # Delay
+        - delay: "00:00:01"
+
+        # Set_Chrg&DischrgPeriod2_Enable
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 108
+            value: 0
+
+        # HotStandbyEN
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 153
+            value: 0

@@ -1,0 +1,449 @@
+title: GridEnforcer
+views:
+  - title: FCR
+    path: fcr
+    cards:
+      - title: Availability FCR-D
+        type: vertical-stack
+        cards:
+          - type: markdown
+            content: >
+              {% set battery_temp = states('sensor.solax1_battery_temp_low')
+              | float(0) %} {% set min_temp = states('sensor.calculate_min_temp') | float(0)
+              %} {% if battery_temp <= min_temp %}
+                <ha-alert alert-type="error">"Battery Temperature below {{ min_temp }}°C, please increase its temperature!"</ha-alert>
+              {% elif battery_temp <= (min_temp + 1) %}
+                <ha-alert alert-type="warning">"Battery Temperature below {{ min_temp + 1 }}°C, be aware and monitor the temperature!"</ha-alert>
+              {% else %}
+                <!-- No action needed if the conditions are not met -->
+              {% endif %}
+          - cards:
+              - entity: sensor.fcru_proc
+                max: 100
+                min: 0
+                name: FCR-D up availability
+                needle: true
+                severity:
+                  green: 90
+                  yellow: 75
+                  red: 0
+                type: gauge
+                theme: default
+              - entity: sensor.fcrn_proc
+                max: 100
+                min: 0
+                name: FCR-D down availability
+                needle: true
+                severity:
+                  green: 90
+                  yellow: 75
+                  red: 0
+                type: gauge
+            type: horizontal-stack
+          - type: conditional
+            conditions:
+              - entity: input_boolean.texthelp
+                state: "on"
+            card:
+              type: markdown
+              content: >-
+                **"FCR-D up availability"** är ett mått på ditt systems förmåga av att
+                exportera effekt till elnätet och **"FCR-D down availability"** är ett
+                mått på ditt systems förmåga av att importera effekt från elnätet. Vid
+                100% så är ditt system fullt tillgängligt för stödtjänsterna FCR-D upp
+                respektive FCR-D ned.
+          - type: history-graph
+            entities:
+              - entity: sensor.fcru_proc
+                name: FCR up availability (12h)
+              - entity: sensor.fcrn_proc
+                name: FCR-D down availability (12h)
+            hours_to_show: 12
+            refresh_interval: 0
+          - cards:
+              - entity: sensor.solax1_battery_power
+                max: 15000
+                min: -15000
+                name: Battery power
+                needle: true
+                type: gauge
+                theme: default
+              - entity: sensor.solax1_battery_temp_low
+                max: 35
+                min: 10
+                name: Battery temperature
+                needle: true
+                severity:
+                  green: 20
+                  yellow: 17
+                  red: 10
+                type: gauge
+              - entity: sensor.solax1_battery_soc
+                name: Battery SOC
+                needle: true
+                min: 10
+                max: 100
+                segments:
+                  - from: 0
+                    color: "#db4437"
+                  - from: 30
+                    color: "#ffa600"
+                  - from: 40
+                    color: "#43a047"
+                  - from: 70
+                    color: "#ffa600"
+                  - from: 90
+                    color: "#db4437"
+                type: gauge
+            type: horizontal-stack
+          - type: conditional
+            conditions:
+              - entity: sensor.solax2_battery_power
+                state_not: unknown
+            card:
+              type: horizontal-stack
+              cards:
+                - entity: sensor.solax2_battery_power
+                  max: 15000
+                  min: -15000
+                  name: Battery 2 power
+                  needle: true
+                  type: gauge
+                  theme: default
+                - entity: sensor.solax2_battery_temp_low
+                  max: 35
+                  min: 10
+                  name: Battery 2 temperature
+                  needle: true
+                  severity:
+                    green: 20
+                    yellow: 17
+                    red: 10
+                  type: gauge
+                - entity: sensor.solax2_battery_soc
+                  name: Battery 2 SOC
+                  needle: true
+                  min: 10
+                  max: 100
+                  segments:
+                    - from: 0
+                      color: "#db4437"
+                    - from: 30
+                      color: "#ffa600"
+                    - from: 40
+                      color: "#43a047"
+                    - from: 70
+                      color: "#ffa600"
+                    - from: 90
+                      color: "#db4437"
+                  type: gauge
+          - type: conditional
+            conditions:
+              - entity: sensor.solax3_battery_power
+                state_not: unknown
+            card:
+              type: horizontal-stack
+              cards:
+                - entity: sensor.solax3_battery_power
+                  max: 15000
+                  min: -15000
+                  name: Battery 3 power
+                  needle: true
+                  type: gauge
+                  theme: default
+                - entity: sensor.solax3_battery_temp_low
+                  max: 35
+                  min: 10
+                  name: Battery 2 temperature
+                  needle: true
+                  severity:
+                    green: 20
+                    yellow: 17
+                    red: 10
+                  type: gauge
+                - entity: sensor.solax3_battery_soc
+                  name: Battery 3 SOC
+                  needle: true
+                  min: 10
+                  max: 100
+                  segments:
+                    - from: 0
+                      color: "#db4437"
+                    - from: 30
+                      color: "#ffa600"
+                    - from: 40
+                      color: "#43a047"
+                    - from: 70
+                      color: "#ffa600"
+                    - from: 90
+                      color: "#db4437"
+                  type: gauge
+            title: Limiting parameters FCR-D
+          - type: conditional
+            conditions:
+              - entity: input_boolean.texthelp
+                state: "on"
+            card:
+              type: markdown
+              content: >-
+                **"Battery power"** är ditt batteris aktuella effekt och det är med
+                batteriet invertern levererar stödtjänsterna. Används batteriet, laddas
+                i eller laddas ur (även köp/sälj av el), så sjunker tillgängligheten för
+                FCR-D up respektive FCR-D down.
+
+
+                Det som negativt påverkar batteriets förmåga att lämna den teoretiska max effekten är **"Battery temperature"**, där det räcker med att en cell i batteriet är lägre än 21°C för att systemet ska begränsa effekten(strömmen). 
+
+
+                För en inverter på 12-15 kW är det viktigt att hålla temperaturen över 21°C och över 17°C för 10 kW mindre, annars begränsas uppladdningseffekten.  
+
+
+                En allt för hög eller låg **"Battery SOC"**, dvs laddnivå, påverkar också effekten negativt.
+
+          - cards:
+              - entity: sensor.solax_pv_power_total
+                max: 15000
+                min: 0
+                name: PV power total
+                needle: true
+                type: gauge
+                severity:
+                  green: 0
+                  yellow: 0
+                  red: 2000
+                theme: default
+              - entity: sensor.solax1_ac_power
+                max: 20000
+                min: -20000
+                name: AC power
+                needle: true
+                segments:
+                  - from: -20000
+                    color: "#db4437"
+                  - from: -2000
+                    color: "#ffa600"
+                  - from: -1500
+                    color: "#43a047"
+                  - from: 1500
+                    color: "#ffa600"
+                  - from: 2000
+                    color: "#db4437"
+                type: gauge
+              - entity: sensor.momentary_active_import
+                max: 20000
+                min: 0
+                name: Grid import power
+                needle: true
+                severity:
+                  green: 0
+                  yellow: 2000
+                  red: 3000
+                type: gauge
+            type: horizontal-stack
+          - type: conditional
+            conditions:
+              - entity: input_boolean.texthelp
+                state: "on"
+            card:
+              type: markdown
+              content: >-
+
+                **"PV power total"** är din solproduktion och denna påverkar
+                stödtjänsten FCR-D up negativt eftersom invertern och dess **”AC
+                power”**, kommer leverera solens effekt ut på elnätet. Då invertern är
+                upptagen med solelen så sjunker tillgängligheten och ”FCR-D up
+                availability” 
+
+
+                Din elanslutnings huvudsäkring begränsar strömmen och därmed effekten
+                **"Grid import power"**.  Under årets kalla månader kan effektuttaget
+                från elnätet öka och det kan leda till att inverterns maximala effekt,
+                vid laddning av batterierna, begränsas.  Detta påverkar FCR-D ned
+                negativt och därmed också ”FCR-D down availability”
+          - type: conditional
+            conditions:
+              - entity: input_boolean.texthelp
+                state: "on"
+            card:
+              type: markdown
+              content: >-
+                Utifrån din och andras prognostiserade tillgänglighet som kommer utifrån
+                historisk data, väderleksrapport med sol och temperatur, så lägger
+                Flower hela tiden bud. Huvuddelen av buden läggs 48 timmar i förväg på
+                alla dygnens timmar. Resterande bud läggs 24 timmar i förväg. 
+
+
+                Du får ersättning för att stå i beredskap, oberoende på hur många
+                aktiveringar det sedan blir. Alla anläggningar blir inte heller
+                aktiverade alla gånger, därför kan antalet aktiveringar skilja mellan
+                anläggningarna. 
+
+
+                Utifrån tidigare ersättningsnivåer och aktuellt pris på stödtjänster så
+                uppskattar GridEnforcer dagens ersättning nedan. 
+
+                **Observera att det endast är en uppskattning.**
+              title: Compensation FCR-D
+          - type: entities
+            entities:
+              - entity: sensor.gridenforcer_fcr_d_daily
+              - entity: sensor.gridenforcer_fcr_d_upp_daily
+              - entity: sensor.gridenforcer_fcr_d_ner_daily
+            title: Estimated compensation
+          - type: conditional
+            conditions:
+              - entity: input_boolean.texthelp
+                state: "on"
+            card:
+              type: markdown
+              content: >-
+                Nedan presenteras data från https://mimer.svk.se/ och det är
+                ersättningen som SVK betalar ut för stödtjänsterna FCR-D upp och FCR-D
+                ned. Dessa ersättningar är för full tillgänglighet och motsvarar en
+                anläggning som bara har batteri och i övrigt ingen import eller export
+                som kan begränsa tillgängligheten.
+
+
+                Då det är en prognos som Flower grundar sina bud på så betyder det också
+                att de måste ha en säkerhetsmarginal i sin budgivning, vilket minskar
+                ersättningen. Detta för att de med säkerhet ska kunna leverera den
+                effekt som de har förbundit sig till.
+
+
+                Ersättningen är också utan den balansansvariges och Flower arvode.  Den
+                del som vi kan påverka är tillgängligheten och då framförallt att hålla
+                SOC mellan 40-70%, se till att batterierna hålls vid rätt temperatur
+                samt att SmartHuben alltid har internetuppkoppling.
+
+
+                Om vi lyckas bra med detta så kommer Flowers prognoser kunna bli allt mer
+                exakta och vår ersättning kommer därmed öka.
+
+
+                FCR-D ned står för den allra största delen av intäkterna.
+          - type: custom:apexcharts-card
+            now:
+              show: true
+              label: NOW
+            graph_span: 2d
+            stacked: true
+            update_interval: 5min
+            apex_config:
+              chart:
+                height: 350px
+              yaxis:
+                forceNiceScale: true
+                decimalsInFloat: 2
+                min: 0
+                title:
+                  text: SEK/kW
+                  offsetX: 10
+                  offsetY: 0
+                  rotate: -90
+              xaxis:
+                tooltip:
+                  enabled: false
+            all_series_config:
+              type: column
+              show:
+                extremas: false
+                in_header: true
+                legend_value: false
+                offset_in_name: false
+            header:
+              title: SVK Mimer FCR-D Forecast
+              show: true
+              show_states: true
+              colorize_states: true
+              standard_format: true
+              disable_actions: true
+            span:
+              start: day
+              offset: "-0h"
+            series:
+              - entity: sensor.svk_mimer_price_fcr_d_down
+                color: steelblue
+                name: FCR-D Down
+                data_generator: |
+                  return (entity.attributes.today_raw.map((start, index) => {
+                    return [new Date(start["start"]).getTime(), entity.attributes.today_raw[index]["value"]];
+                  })).concat(entity.attributes.tomorrow_raw.map((start, index) => {
+                    return [new Date(start["start"]).getTime(), entity.attributes.tomorrow_raw[index]["value"]];
+                  }));
+              - entity: sensor.svk_mimer_price_fcr_d_up
+                color: purple
+                name: FCR-D Up
+                data_generator: |
+                  return (entity.attributes.today_raw.map((start, index) => {
+                    return [new Date(start["start"]).getTime(), entity.attributes.today_raw[index]["value"]];
+                  })).concat(entity.attributes.tomorrow_raw.map((start, index) => {
+                    return [new Date(start["start"]).getTime(), entity.attributes.tomorrow_raw[index]["value"]];
+                  }));
+          - type: custom:apexcharts-card
+            now:
+              show: false
+              label: NOW
+            graph_span: 4month
+            stacked: true
+            update_interval: 5min
+            apex_config:
+              chart:
+                height: 350px
+              yaxis:
+                forceNiceScale: true
+                decimalsInFloat: 2
+                min: 0
+                title:
+                  text: SEK/kW
+                  offsetX: 10
+                  offsetY: 0
+                  rotate: -90
+              xaxis:
+                tooltip:
+                  enabled: false
+            all_series_config:
+              type: column
+              group_by:
+                func: sum
+                duration: 1day
+                fill: zero
+                start_with_last: false
+              show:
+                extremas: false
+                in_header: true
+                legend_value: false
+                offset_in_name: false
+            header:
+              title: SVK Mimer FCR-D History
+              show: true
+              show_states: false
+              colorize_states: true
+              standard_format: true
+              disable_actions: true
+            span:
+              start: month
+              offset: "-3month"
+            series:
+              - entity: sensor.svk_mimer_earnings_today_fcr_d_down
+                color: steelblue
+                name: FCR-D Down
+                statistics:
+                  type: state
+                  period: day
+                  align: start
+              - entity: sensor.svk_mimer_earnings_today_fcr_d_up
+                color: purple
+                name: FCR-D Up
+                statistics:
+                  type: state
+                  period: day
+                  align: start
+          - show_name: false
+            show_icon: true
+            type: button
+            tap_action:
+              action: toggle
+            entity: input_boolean.texthelp
+            name: Show Help
+            show_state: false
+            icon: mdi:help-circle-outline

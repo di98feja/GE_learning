@@ -1,0 +1,99 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+myenergi_zappi:
+  automation:
+    - id: zappi_1_fast_charging
+      alias: Zappi 1 Fast Charging
+      mode: restart
+      trigger:
+        - platform: time_pattern
+          seconds: "/30"
+        - platform: state
+          entity_id: binary_sensor.zappi_fast
+          to: "on"
+      condition: "{{ states('select.myenergi_zappi_1_charge_mode') != 'Fast'
+        and states('binary_sensor.zappi_fast') == 'on'
+        and states('binary_sensor.ev_charge_limit_reached') == 'off' }}"
+      action:
+        - service: select.select_option
+          data:
+            option: Fast
+          target:
+            entity_id: select.myenergi_zappi_1_charge_mode
+
+    #------------------------------------------------------------------------
+
+    - id: zappi_1_eco_plus_charging
+      alias: Zappi 1 Eco Plus Charging
+      mode: restart
+      trigger:
+        - platform: time_pattern
+          seconds: "/30"
+        - platform: state
+          entity_id: binary_sensor.zappi_eco_plus
+          to: "on"
+      condition: "{{ states('select.myenergi_zappi_1_charge_mode') != 'Eco+'
+        and states('binary_sensor.zappi_eco_plus') == 'on'
+        and states('binary_sensor.ev_charge_limit_reached') == 'off' }}"
+      action:
+        - service: select.select_option
+          data:
+            option: Eco+
+          target:
+            entity_id: select.myenergi_zappi_1_charge_mode
+
+    #------------------------------------------------------------------------
+
+    - id: zappi_1_stop_charging
+      alias: Zappi 1 Stop Charging
+      mode: restart
+      trigger:
+        - platform: time_pattern
+          seconds: "/30"
+        - platform: state
+          entity_id: binary_sensor.zappi_stop
+          to: "on"
+      condition: "{{ states('select.myenergi_zappi_1_charge_mode') != 'Stopped' and
+                     (states('binary_sensor.zappi_stop') == 'on' or
+                      states('binary_sensor.ev_charge_limit_reached') == 'on')
+        }}"
+      action:
+        - service: select.select_option
+          data:
+            option: Stopped
+          target:
+            entity_id: select.myenergi_zappi_1_charge_mode
+
+  #***************************************************************************************************
+
+  binary_sensor:
+    - platform: template
+      sensors:
+        ev_is_charging:
+          friendly_name: "EV is Charging"
+          value_template: >
+            {{ states('sensor.myenergi_zappi_1_plug_status') == 'Charging'
+            or states('sensor.myenergi_zappi_1_plug_status') == 'Boosting'
+            or states('sensor.myenergi_zappi_1_status') == 'Charging'
+            or states('sensor.myenergi_zappi_1_status') == 'Boosting'
+            }}

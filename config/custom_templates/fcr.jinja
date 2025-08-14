@@ -1,0 +1,36 @@
+{% macro battery_max_power(entity_id) %}
+
+  {% set capacity = states(entity_id) %}
+  {% if capacity != 'unknown' %}
+    {% if 'g2' in states('sensor.gridenforcer_git_branch') %}
+      {{ (capacity | float(0) / 5.8 * 115.2 * 25) | float(0) }}
+    {% elif 'g4' in states('sensor.gridenforcer_git_branch') %}
+      {{ (capacity | float(0) / 5.8 * 115.2 * 30) | float(0) }}
+    {% else %}
+      {{ 0 | float(0) }}
+    {% endif %}
+  {% else %}
+    {{ 0 | float(0) }}
+  {% endif %}
+
+{% endmacro %}
+
+
+
+{% macro bms_calc_max_power(battery_install_capacity, bms_max_current) %}
+
+  {% set capacity = states(battery_install_capacity) %}
+  {% set current = states(bms_max_current) %}
+  {% if capacity != 'unknown' %}
+    {% if 'g2' in states('sensor.gridenforcer_git_branch') %}
+      {{ (capacity | float(0) / 5.8 * 115.2 * current | float(0)) | int }}
+    {% elif 'g4' in states('sensor.gridenforcer_git_branch') %}
+      {{ (capacity | float(0) / 5.8 * 115.2 * current | float(0)) | int }}
+    {% else %}
+      {{ 0 }}
+    {% endif %}
+  {% else %}
+    {{ 0 }}
+  {% endif %}
+
+{% endmacro %}

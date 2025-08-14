@@ -1,0 +1,85 @@
+system_mqtt:
+  automation:
+    - id: mqtt_quick_package
+      alias: MQTT Quick Package
+      mode: restart
+      initial_state: false
+      trigger:
+        - platform: time_pattern
+          seconds: "/2"
+      action:
+        - service: mqtt.publish
+          data:
+            retain: true
+            topic: !secret QUICK_PACKAGE
+            payload: >-
+              {
+                "SITEPOWER": {{ states("sensor.power_consumption") | float(0) }},
+                "SITEEXP": {{ states("sensor.momentary_active_export") | float(0) }},
+                "SITEIMP": {{ states("sensor.momentary_active_import") | float(0) }},
+                "BATPOWER": {{ states("sensor.solax1_battery_power") | float(0) }},
+                "FCRUP": {{ states("binary_sensor.flower_fcr_d_up") | float(0) }},
+                "FCRDOWN": {{ states("binary_sensor.flower_fcr_d_down") | float(0) }},
+                "FCRDOWNDEC": {{ states("sensor.available_power_fcr_u") | float(0) }},
+                "FCRUPDEC": {{ states("sensor.available_power_fcr_n") | float(0) }},
+                "FCRDOWNPROC": {{ states("sensor.fcrn_proc") | float(0) }},
+                "FCRUPPROC": {{ states("sensor.fcru_proc") | float(0) }},
+                "time": {{ now().timestamp() }}
+              }
+    # Added sensors 24-05-26 FCRDOWNDEC, FCRUPDEC
+    # -------------------------------------------------------------------------------------
+    - id: mqtt_normal_package
+      alias: MQTT Normal Package
+      mode: restart
+      initial_state: false
+      trigger:
+        - platform: time_pattern
+          seconds: "/30"
+      action:
+        - service: mqtt.publish
+          data:
+            retain: true
+            topic: !secret NORMAL_PACKAGE
+            payload: >-
+              {
+                "BATTEMP": {{ states("sensor.solax1_battery_temp_low") | float(0) }},
+                "PVTOTAL": {{ (states("sensor.solax1_pv1_power") | float(0)) + (states("sensor.solax1_pv2_power") | float(0)) }},
+                "SOC": {{ states("sensor.solax1_battery_soc") | float(0) }},
+                "INVSTATE": {{ states("sensor.solax1_inverter_state_value") | float(0) }},
+                "SOCFAULTDET": "{{ states("input_boolean.soc_fault_detected") }}",
+                "SOCFAULTCOUNT": {{ states("counter.soc_faults_detected_counter") | float(0) }},
+                "time": {{ now().timestamp() }}
+              }
+    # Added sensors 24-05-26 SOCFAULTDET, SOCFAULTCOUNT
+    # -------------------------------------------------------------------------------------
+    - id: mqtt_slow_package
+      alias: MQTT Slow Package
+      mode: restart
+      initial_state: false
+      trigger:
+        - platform: time_pattern
+          minutes: "/1"
+      action:
+        - service: mqtt.publish
+          data:
+            retain: true
+            topic: !secret SLOW_PACKAGE
+            payload: >-
+              {
+                "SITEFUSE": {{ states("input_number.max_grid_current") | float(0) }},
+                "BATKWH": {{ states("sensor.solax1_battery_install_capacity") | float(0) }},
+                "GEGITBRANCH": "{{ states('sensor.gridenforcer_git_branch') }}",
+                "GEGITHEXSHA": "{{ states('sensor.gridenforcer_git_hexsha_short') }}",
+                "GEUPDATETIME": "{{ states('sensor.gridenforcer_update') }}",
+                "SOLAXINVVER": "{{ states('sensor.solax1_firmwareversion_invertermaster') }}",
+                "SOLAXMANVER": "{{ states('sensor.solax1_firmwareversion_manager') }}",
+                "SOLAXFIRMARM": "{{ states('sensor.solax1_firmwareversion_arm') }}",
+                "SOLAXFIRMDSP": "{{ states('sensor.solax1_firmwareversion_dsp') }}",
+                "FCRUPCOUNT": {{ states("counter.fcr_d_up_counter") | float(0) }},
+                "FCRDOWNCOUNT": {{ states("counter.fcr_d_down_counter") | float(0) }},
+                "DBSIZE": {{ states("sensor.mariadb_size") | float(0) }},
+                "SERIESNO": "{{ states('sensor.solax1_series_number') }}",
+                "SERIESNUM": "{{ states('sensor.solax1_invertersn') }}",
+                "SPOTPRICE": "{{ states('sensor.spot_price_electricity') }}",
+                "time": {{ now().timestamp() }}
+              }

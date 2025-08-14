@@ -1,0 +1,708 @@
+# MIT License
+#
+# Copyright (c) 2021-2024 Reik Steinert, Mikael Andersson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+- name: Solax1 InverterSN
+  data_type: string
+  address: 0
+  input_type: holding
+  count: 7
+  scan_interval: 120
+  slave: 1
+- name: Solax1 FirmwareVersion DSP
+  data_type: uint16
+  address: 125
+  input_type: holding
+  scan_interval: 120
+  slave: 1
+- name: Solax1 FirmwareVersion ModbusRTU
+  data_type: uint16
+  address: 130
+  input_type: holding
+  scan_interval: 120
+  slave: 1
+- name: Solax1 FirmwareVersion ARM
+  data_type: uint16
+  address: 131
+  input_type: holding
+  scan_interval: 120
+  slave: 1
+- name: Solax1 FirmwareVersion ARM Bootloader
+  data_type: uint16
+  address: 132
+  input_type: holding
+  scan_interval: 120
+  slave: 1
+
+- name: Solax1 Multiple Registers 4
+  address: 139
+  input_type: holding
+  count: 7
+  data_type: custom
+  structure: ">7H"
+  scan_interval: 1
+  slave: 1
+
+# Perhaps put the following (address 139-145 or 139-186) in one sensor:
+# - name: Solax1 Inverter Mode Value
+#   data_type: uint16
+#   address: 139
+#   input_type: holding
+#   scan_interval: 3
+#   slave: 1
+
+# - name: Solax1 Inverter Manual Mode Value
+#   data_type: uint16
+#   address: 140
+#   input_type: holding
+#   scan_interval: 3
+#   slave: 1
+
+# - name: Solax1 Max Charge Current
+#   data_type: uint16
+#   unit_of_measurement: "A"
+#   address: 144
+#   input_type: holding
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 2
+#   slave: 1
+
+# - name: Solax1 Max Discharge Current
+#   data_type: uint16
+#   unit_of_measurement: "A"
+#   address: 145
+#   input_type: holding
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 2
+#   slave: 1
+
+- name: Solax1 Registration Code
+  data_type: string
+  address: 170
+  input_type: holding
+  count: 5
+  scan_interval: 120
+  slave: 1
+
+- name: Solax1 Export Limit
+  data_type: uint16
+  unit_of_measurement: "W"
+  address: 182
+  input_type: holding
+  scale: 10
+  scan_interval: 5
+  slave: 1
+
+- name: Solax1 Inverter Rate Power
+  data_type: uint16
+  unit_of_measurement: "W"
+  address: 186
+  input_type: holding
+  scan_interval: 60
+  slave: 1
+
+- name: Solax1 Main Breaker Current Limit
+  data_type: uint16
+  unit_of_measurement: A
+  address: 215
+  input_type: holding
+  scan_interval: 60
+  slave: 1
+
+- name: Solax1 Multiple Registers 1
+  address: 03
+  input_type: input
+  count: 20
+  data_type: custom
+  structure: ">5Hh3Hh7H3h"
+  scan_interval: 1
+  slave: 1
+
+# 1H
+# - name: Solax1 PV1 Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 03
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# 2H
+# - name: Solax1 PV2 Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 04
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+
+# 3H
+# - name: Solax1 PV1 Current
+#   data_type: uint16
+#   unit_of_measurement: A
+#   address: 05
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# 4H
+# - name: Solax1 PV2 Current
+#   data_type: uint16
+#   unit_of_measurement: A
+#   address: 06
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+
+# 5 H
+#   GridFrequency
+
+# h
+# - name: Solax1 Inverter Radiator Temperature
+#   data_type: int16
+#   unit_of_measurement: °C
+#   address: 8
+#   input_type: input
+#   scan_interval: 60
+#   slave: 1
+
+# 1H
+# - name: Solax1 Inverter State Value
+#   data_type: uint16
+#   address: 9
+#   input_type: input
+#   scan_interval: 15
+#   slave: 1
+
+# 2H
+# - name: Solax1 PV1 Power
+#   data_type: uint16
+#   unit_of_measurement: W
+#   address: 10
+#   input_type: input
+#   scan_interval: 5
+#   slave: 1
+# 3H
+# - name: Solax1 PV2 Power
+#   data_type: uint16
+#   unit_of_measurement: W
+#   address: 11
+#   input_type: input
+#   scan_interval: 5
+#   slave: 1
+
+# h
+# 7H
+
+# 1h
+# - name: Solax1 Battery Voltage
+#   data_type: int16
+#   unit_of_measurement: V
+#   address: 20
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+
+# 2h
+# - name: Solax1 Battery Current
+#   data_type: int16
+#   unit_of_measurement: A
+#   address: 21
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+
+# 3h
+# - name: Solax1 Battery Power
+#   data_type: int16
+#   unit_of_measurement: W
+#   address: 22
+#   input_type: input
+#   scan_interval: 2
+#   slave: 1
+
+- name: Solax1 Battery Internal Temperature
+  data_type: int16
+  unit_of_measurement: °C
+  address: 24
+  input_type: input
+  scan_interval: 60
+  slave: 1
+
+# Perhaps put the following (address 28-37) in one sensor:
+
+- name: Solax1 Battery SOC
+  data_type: uint16
+  unit_of_measurement: "%"
+  address: 28
+  input_type: input
+  scan_interval: 10
+  slave: 1
+
+- name: Solax1 Battery Output Energy Total
+  data_type: uint32
+  unit_of_measurement: kWh
+  address: 29
+  input_type: input
+  swap: word
+  scale: 0.1
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  state_class: total_increasing
+  slave: 1
+
+- name: Solax1 Battery Output Energy Today
+  data_type: uint16
+  unit_of_measurement: kWh
+  address: 32
+  input_type: input
+  scale: 0.1
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  slave: 1
+
+- name: Solax1 Battery Input Energy Total
+  data_type: uint32
+  unit_of_measurement: kWh
+  address: 33
+  input_type: input
+  swap: word
+  scale: 0.1
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  state_class: total_increasing
+  slave: 1
+
+- name: Solax1 Battery Input Energy Today
+  data_type: uint16
+  unit_of_measurement: kWh
+  address: 35
+  input_type: input
+  scale: 0.1
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  slave: 1
+
+- name: Solax1 BMS Charge Max Current
+  data_type: uint16
+  unit_of_measurement: A
+  address: 36
+  input_type: input
+  scale: 0.1
+  precision: 1
+  scan_interval: 10
+  device_class: current
+  slave: 1
+
+- name: Solax1 BMS Discharge Max Current
+  data_type: uint16
+  unit_of_measurement: A
+  address: 37
+  input_type: input
+  scale: 0.1
+  precision: 1
+  scan_interval: 10
+  device_class: current
+  slave: 1
+
+- name: Solax1 Battery Install Capacity
+  data_type: uint32
+  swap: word
+  unit_of_measurement: kWh
+  address: 38
+  input_type: input
+  scale: 0.001
+  precision: 2
+  scan_interval: 60
+  slave: 1
+
+# - name: Solax1 Grid Power
+#   data_type: int32
+#   unit_of_measurement: W
+#   address: 70
+#   input_type: input
+#   swap: word
+#   scan_interval: 1
+#   slave: 1
+
+- name: Solax1 Feed In Total
+  data_type: uint32
+  unit_of_measurement: kWh
+  address: 72
+  input_type: input
+  swap: word
+  scale: 0.01
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  state_class: total_increasing
+  slave: 1
+
+- name: Solax1 Consumption Total
+  data_type: uint32
+  unit_of_measurement: kWh
+  address: 74
+  input_type: input
+  swap: word
+  scale: 0.01
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  state_class: total_increasing
+  slave: 1
+
+- name: Solax1 Unlocked
+  data_type: uint16
+  address: 84
+  input_type: input
+  scan_interval: 10
+  slave: 1
+
+#---------------------------------------------------------------
+
+- name: Solax1 Multiple Registers 2
+  address: 106
+  input_type: input
+  count: 24
+  data_type: custom
+  structure: ">HhhHHhhHHhhHHHhHHHhHHHhH"
+  scan_interval: 1
+  slave: 1
+
+# - name: Solax1 L1 Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 106
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L1 Current
+#   data_type: int16
+#   unit_of_measurement: A
+#   address: 107
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L1 Power
+#   data_type: int16
+#   unit_of_measurement: W
+#   address: 108
+#   input_type: input
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L1 Frequency
+#   data_type: uint16
+#   unit_of_measurement: Hz
+#   address: 109
+#   input_type: input
+#   scale: 0.01
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+
+# - name: Solax1 L2 Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 110
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L2 Current
+#   data_type: int16
+#   unit_of_measurement: A
+#   address: 111
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L2 Power
+#   data_type: int16
+#   unit_of_measurement: W
+#   address: 112
+#   input_type: input
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L2 Frequency
+#   data_type: uint16
+#   unit_of_measurement: Hz
+#   address: 113
+#   input_type: input
+#   scale: 0.01
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+
+# - name: Solax1 L3 Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 114
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L3 Current
+#   data_type: int16
+#   unit_of_measurement: A
+#   address: 115
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L3 Power
+#   data_type: int16
+#   unit_of_measurement: W
+#   address: 116
+#   input_type: input
+#   scan_interval: 10
+#   slave: 1
+# - name: Solax1 L3 Frequency
+#   data_type: uint16
+#   unit_of_measurement: Hz
+#   address: 117
+#   input_type: input
+#   scale: 0.01
+#   precision: 1
+#   scan_interval: 10
+#   slave: 1
+
+#---------------------------------------------------------------
+
+# - name: Solax1 L1 EPS Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 118
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 15
+#   slave: 1
+# - name: Solax1 L1 EPS Current
+#   data_type: uint16
+#   unit_of_measurement: A
+#   address: 119
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 15
+#   slave: 1
+# - name: Solax1 L1 EPS Power
+#   data_type: uint16
+#   unit_of_measurement: W
+#   address: 120
+#   input_type: input
+#   scan_interval: 15
+#   slave: 1
+
+# - name: Solax1 L2 EPS Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 122
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 15
+#   slave: 1
+# - name: Solax1 L2 EPS Current
+#   data_type: uint16
+#   unit_of_measurement: A
+#   address: 123
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 15
+#   slave: 1
+# - name: Solax1 L2 EPS Power
+#   data_type: uint16
+#   unit_of_measurement: W
+#   address: 124
+#   input_type: input
+#   scan_interval: 15
+#   slave: 1
+
+# - name: Solax1 L3 EPS Voltage
+#   data_type: uint16
+#   unit_of_measurement: V
+#   address: 126
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 15
+#   slave: 1
+# - name: Solax1 L3 EPS Current
+#   data_type: uint16
+#   unit_of_measurement: A
+#   address: 127
+#   input_type: input
+#   scale: 0.1
+#   precision: 1
+#   scan_interval: 15
+#   slave: 1
+# - name: Solax1 L3 EPS Power
+#   data_type: uint16
+#   unit_of_measurement: W
+#   address: 128
+#   input_type: input
+#   scan_interval: 15
+#   slave: 1
+
+#---------------------------------------------------------------
+
+- name: Solax1 Multiple Registers 3
+  address: 130
+  input_type: input
+  count: 6
+  data_type: custom
+  structure: ">hhhhhh"
+  scan_interval: 1
+  slave: 1
+
+# - name: Solax1 L1 Feed In Power
+#   data_type: int32
+#   unit_of_measurement: W
+#   address: 130
+#   input_type: input
+#   swap: word
+#   precision: 1
+#   scan_interval: 5
+
+# - name: Solax1 L2 Feed In Power
+#   data_type: int32
+#   unit_of_measurement: W
+#   address: 132
+#   input_type: input
+#   swap: word
+#   precision: 1
+#   scan_interval: 5
+
+# - name: Solax1 L3 Feed In Power
+#   data_type: int32
+#   unit_of_measurement: W
+#   address: 134
+#   input_type: input
+#   swap: word
+#   precision: 1
+#   scan_interval: 1
+
+#---------------------------------------------------------------
+
+- name: Solax1 Solar Energy Total
+  data_type: uint32
+  unit_of_measurement: kWh
+  address: 148
+  input_type: input
+  swap: word
+  scale: 0.1
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  state_class: total_increasing
+  slave: 1
+- name: Solax1 Solar Energy Today
+  data_type: uint16
+  unit_of_measurement: kWh
+  address: 150
+  input_type: input
+  scale: 0.1
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  slave: 1
+
+- name: Solax1 Feed In Today
+  data_type: uint32
+  unit_of_measurement: kWh
+  address: 152
+  input_type: input
+  swap: word
+  scale: 0.01
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  slave: 1
+- name: Solax1 Consumption Today
+  data_type: uint32
+  unit_of_measurement: kWh
+  address: 154
+  input_type: input
+  swap: word
+  scale: 0.01
+  precision: 1
+  scan_interval: 60
+  device_class: energy
+  slave: 1
+
+- name: Solax1 Battery Temp High
+  data_type: int16
+  unit_of_measurement: °C
+  address: 186
+  input_type: input
+  scale: 0.1
+  scan_interval: 60
+  slave: 1
+
+- name: Solax1 Battery Temp Low
+  data_type: int16
+  unit_of_measurement: °C
+  address: 187
+  input_type: input
+  scale: 0.1
+  scan_interval: 60
+  slave: 1
+# - name: Solax1 Modbus Power Control
+#   data_type: uint16
+#   address: 256
+#   input_type: input
+#   scan_interval: 2
+#   slave: 1
+
+# - name: Solax1 Active Power Target
+#   data_type: int32
+#   unit_of_measurement: W
+#   address: 258
+#   input_type: input
+#   swap: word
+#   scan_interval: 5
+#   slave: 1

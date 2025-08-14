@@ -1,0 +1,55 @@
+views:
+  - title: Home
+    cards: []
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: energy-solar-graph
+            title: Solar production
+          - type: heading
+            heading: Ny sektion
+        column_span: 1
+      - type: grid
+        cards:
+          - type: entities
+            entities:
+              - entity: sensor.power_production_now_2
+                name: Solar production forecast - now
+              - entity: sensor.energy_current_hour_2
+                name: Solar production forecast - this hour
+              - entity: sensor.energy_production_today_2
+                name: Solar production forecast - today
+              - entity: sensor.energy_production_tomorrow_2
+                name: Solar production forecast - tomorrow
+              - entity: sensor.energy_production_today_remaining_2
+                name: Solar production forecast - remaning today
+              - entity: sensor.energy_next_hour_2
+                name: Solar production forecast - remaning next hour
+              - entity: sensor.power_highest_peak_time_today_2
+                name: Solar production forecast - highest power today
+              - entity: sensor.power_highest_peak_time_tomorrow_2
+                name: Solar production forecast - highest hour tomorrow
+            title: Norr tak
+      - type: grid
+        cards:
+          - type: entities
+            entities:
+              - entity: sensor.power_production_now
+                name: Solar production forecast - now
+              - entity: sensor.energy_current_hour
+                name: Solar production forecast - this hour
+              - entity: sensor.energy_production_today
+                name: Solar production forecast - today
+              - entity: sensor.energy_production_tomorrow
+                name: Solar production forecast - tomorow
+              - entity: sensor.energy_production_today_remaining
+                name: Solar production forecast - remaning today
+              - entity: sensor.energy_next_hour
+                name: Solar production forecast - next hour
+              - entity: sensor.power_highest_peak_time_today
+                name: Solar production forecast -  higest power
+              - entity: sensor.power_highest_peak_time_tomorrow
+                name: Solar production forecast - highest power tomorow
+            title: Söder tak
+        column_span: 1

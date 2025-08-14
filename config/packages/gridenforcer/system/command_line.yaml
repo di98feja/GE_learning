@@ -1,0 +1,81 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+system_command_line:
+  command_line:
+    - sensor:
+        command: "cat /sys/class/thermal/thermal_zone0/temp"
+        name: CPU Temperature
+        unit_of_measurement: "°C"
+        value_template: "{{ value | multiply(0.001) | round(1) }}"
+
+    - sensor:
+        name: Gateway IP
+        command: "ip route | awk '/default/ {print $3; exit}'"
+    - binary_sensor:
+        name: Gateway Connection
+        command: "ping -W 1 -c 1 $(ip route | awk '/default/ {print $3; exit}') > /dev/null 2>&1 && echo success || echo fail"
+        device_class: connectivity
+        payload_on: "success"
+        payload_off: "fail"
+
+    - sensor:
+        name: myenergi version
+        command: 'jq -e ''.data.entries[] | select(.domain=="myenergi") | .domain == "myenergi"'' .storage/core.config_entries > /dev/null && jq -r ''.version'' custom_components/myenergi/manifest.json 2>/dev/null || echo unavailable'
+        value_template: >
+          {{ version(value).string }}
+    - sensor:
+        name: myenergi version latest
+        command: 'curl -L -s -H ''Accept: application/json'' https://github.com/CJNE/ha-myenergi/releases/latest | jq -r ''.tag_name'' 2>/dev/null || echo unavailable'
+        scan_interval: 3600
+        command_timeout: 600
+        value_template: >
+          {{ version(value).string }}
+    - sensor:
+        name: HACS version
+        command: jq -r .version custom_components/hacs/manifest.json 2>/dev/null || echo unavailable
+        value_template: >
+          {{ version(value).string }}
+    - sensor:
+        name: Nordpool version
+        command: jq -r .version custom_components/nordpool/manifest.json 2>/dev/null || echo unavailable
+        value_template: >
+          {{ version(value).string }}
+    - sensor:
+        name: Nordpool version latest
+        command: 'curl -L -s -H ''Accept: application/json'' https://github.com/custom-components/nordpool/releases/latest | jq -r ''.tag_name'' 2>/dev/null || echo unavailable'
+        scan_interval: 3600
+        command_timeout: 600
+        value_template: >
+          {{ version(value).string }}
+    - sensor:
+        name: SVK Mimer version
+        command: jq -r .version custom_components/svkmimer/manifest.json 2>/dev/null || echo unavailable
+        value_template: >
+          {{ version(value).string }}
+    - sensor:
+        name: SVK Mimer version latest
+        command: 'curl -L -s -H ''Accept: application/json'' https://github.com/robinostlund/homeassistant-svk-mimer/releases/latest | jq -r ''.tag_name'' 2>/dev/null || echo unavailable'
+        scan_interval: 3600
+        command_timeout: 600
+        value_template: >
+          {{ version(value).string }}

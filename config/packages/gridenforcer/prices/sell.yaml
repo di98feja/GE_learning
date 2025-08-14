@@ -1,0 +1,85 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+prices_sell:
+  binary_sensor:
+    - platform: template
+      sensors:
+        sell_on_next_occasion:
+          friendly_name: "Sell On Next Occasion"
+          icon_template: mdi:cash-plus
+          value_template: >
+            {{ states('sensor.electricity_price_limit_sell') | float(0) >= states('sensor.electricity_price_limit_use') | float(0) }}
+
+  #-----------------------------------------------------------------------------------------------------------------------------------
+
+  sensor:
+    - platform: template
+      sensors:
+        electricity_price_limit_sell:
+          friendly_name: "Electricity Price Limit Sell"
+          icon_template: mdi:cash-plus
+          unit_of_measurement: "SEK/kWh"
+          value_template: >
+            {% set values =
+            [ state_attr('sensor.electricity_price_sell','prices_today')[0] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[1] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[2] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[3] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[4] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[5] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[6] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[7] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[8] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[9] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[10] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[11] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[12] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[13] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[14] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[15] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[16] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[17] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[18] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[19] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[20] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[21] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[22] | float('unavailable'),
+              state_attr('sensor.electricity_price_sell','prices_today')[23] | float('unavailable')
+            ] | sort(reverse=true)
+            %}
+
+            {% if states('input_number.hours_to_sell') | int(0) > 0 %}
+                {% set current_value = values[states('input_number.hours_to_sell') | int(0) - 1] | float(0) %}
+                {% set electricity_price_bottom = states('sensor.electricity_price_bottom') | float(0) %}
+                {% set kwh_price_battery = states('input_number.kwh_price_battery') | float(0) %}
+                {% set limit_value = electricity_price_bottom + kwh_price_battery %}
+
+                {% if current_value <= limit_value %}
+                    {{ limit_value | round(3) }}
+                {% else %}
+                    {{ current_value | round(3) }}
+                {% endif %}
+            {% else %}
+                {{ 'unavailable' }}
+            {% endif %}
+        #-----------------------------------------------------------------------------------------------------------------------------------

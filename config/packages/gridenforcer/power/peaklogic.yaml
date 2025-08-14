@@ -1,0 +1,64 @@
+power_peaklogic:
+  sensor:
+    - platform: template
+      sensors:
+        soc_peak_to_soc_backup_energy:
+          friendly_name: "Peak Shaving Energy"
+          icon_template: mdi:battery-arrow-up
+          value_template: >
+            {% set soc_backup = states('input_number.soc_backup') | int(0) %}
+            {% set soc_min = states('input_number.soc_min') | int(0) %}
+            {% set battery_capacity = states('sensor.solax1_battery_install_capacity') | float(0) %}
+            {% if (soc_backup - soc_min) > 0 %}
+                {{ ((soc_backup - soc_min) / 100 * battery_capacity) | round(1) }}
+            {% else %}
+                0
+            {% endif %}
+          unit_of_measurement: "kWh"
+
+  automation:
+    - id: set_soc_backup_on_battery_override
+      alias: Set SOC Backup When Battery Override Is On
+      mode: restart
+      trigger:
+        - platform: state
+          entity_id: input_boolean.use_battery_override
+          to: "on"
+      action:
+        # Spara det nuvarande värdet av soc_backup innan vi ändrar det
+        - service: input_number.set_value
+          data:
+            value: "{{ states('input_number.soc_backup') }}"
+            entity_id: input_number.previous_soc_backup
+        # Sätt soc_backup till soc_min
+        - service: input_number.set_value
+          data:
+            value: "{{ states('input_number.soc_min') | float }}"
+            entity_id: input_number.soc_backup
+
+    - id: reset_soc_backup_on_battery_override_off
+      alias: Reset SOC Backup When Battery Override Is Off
+      mode: restart
+      trigger:
+        - platform: state
+          entity_id: input_boolean.use_battery_override
+          to: "off"
+      action:
+        # Återställ soc_backup till det sparade värdet
+        - service: input_number.set_value
+          data:
+            value: "{{ states('input_number.previous_soc_backup') | float }}"
+            entity_id: input_number.soc_backup
+
+    #       - service: modbus.write_register
+    #        data:
+    #       hub: Solax1
+    #      slave: 1
+    #     address: "113"
+    #    value: '{{ (states("input_number.max_soc_max") | float(0)) | round(0) }}'
+#
+#         - service: input_number.set_value
+#          data_template:
+#         value: "{{ (states('sensor.solax1_battery_soc') | float) + 5 }}"
+#        target:
+#       entity_id: input_number.soc_backup

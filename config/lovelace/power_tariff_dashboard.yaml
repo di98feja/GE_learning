@@ -1,0 +1,228 @@
+views:
+  - title: Home
+    sections:
+      - type: grid
+        cards:
+          - show_name: true
+            show_icon: true
+            type: button
+            tap_action:
+              action: toggle
+            entity: input_boolean.texthelp
+            name: "Show Help : Tryck här så visas hjälptext under olika kort."
+            show_state: false
+            icon: mdi:help-circle-outline
+            icon_height: 30px
+            grid_options:
+              columns: 12
+              rows: 2
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: input_boolean.texthelp
+                state: "on"
+            card:
+              type: markdown
+              content: |
+                *Show Help* <br/> Nu visas hjälptext under olika kort.
+          - type: heading
+            heading: Energy Tariff
+            heading_style: title
+            grid_options:
+              columns: full
+              rows: 1
+          - type: markdown
+            content: >-
+              Om effekttariff är aktiverad nedan så sker laddning av elbil och
+              Solaxbatterier i förhållande till instält värde.
+
+
+              Elbil kan dock laddas 'EV Charge Forced' är aktiverad.
+          - type: entities
+            entities:
+              - entity: input_select.energy_tariff
+          - type: gauge
+            entity: sensor.momentary_active_import
+            unit: W
+            needle: true
+            max: 10000
+            severity:
+              green: 0
+              yellow: 4000
+              red: 7000
+            grid_options:
+              columns: 6
+              rows: 3
+          - type: gauge
+            entity: sensor.hourly_energy
+            max: 5
+            needle: true
+            severity:
+              green: 0
+              yellow: 3
+              red: 4
+            name: This Hour's Energy
+            grid_options:
+              columns: 6
+              rows: 3
+          - type: gauge
+            entity: sensor.remaining_hourly_peak_energy
+            max: 3
+            needle: true
+            severity:
+              green: 1
+              yellow: 0.5
+              red: 0
+            name: Hourly Peak Energy Left Before Battery Is Used
+            grid_options:
+              columns: 6
+              rows: auto
+          - type: gauge
+            entity: sensor.remaining_hourly_off_peak_energy
+            max: 3
+            needle: true
+            severity:
+              green: 1
+              yellow: 0.5
+              red: 0
+            name: Hourly Off Peak Energy Left Before Battery Is Used
+            grid_options:
+              columns: 6
+              rows: auto
+          - type: markdown
+            content: >-
+              *Hourly Energy Left Before Battery Is Used* <br/> 
+
+
+              Här visas hur mycket mer effekt man kan använda innevarande timme
+              innan batteriet går och används så instäld *"Allowed Hourly Peak
+              Energy"* eller *"Allowed Hourly Off Peak Energy"* inte överskrids.
+
+
+              SmartHuben vet ännu inte hur mycket energi man kommer att förbruka
+              innevarande dag så man får utifrån informationen i "Energy
+              Dashboad" uppskatta hur mycket energi man kan effektbalansera med
+              och ställa in "Peak Shaving Energy" under "SOC settings" under
+              "User Settings"
+            visibility:
+              - condition: state
+                entity: input_boolean.texthelp
+                state: "on"
+          - type: heading
+            heading: Input
+            heading_style: subtitle
+          - entities:
+              - entity: input_number.allowed_hourly_peak_energy
+                secondary_info: none
+                name: Allowed Hourly Peak Energy
+            show_header_toggle: true
+            state_color: true
+            type: entities
+          - entities:
+              - entity: input_number.allowed_hourly_off_peak_energy
+                secondary_info: none
+                name: Allowed Hourly Off Peak Energy
+            show_header_toggle: true
+            state_color: true
+            type: entities
+          - type: markdown
+            content: >-
+              *Allowed Hourly Off Peak Energy* <br/> 
+
+
+              Här Ställer man in efter vilken medeleffekt per timme batteriet
+              skall gå in och användas så att inte *"Allowed Hourly Peak
+              Energy"* överskrids.
+
+              SmartHuben vet ännu inte hur mycket energi man kommer att förbruka
+              innevarande dag så man får utifrån informationen i "Energy
+              Dashboad" uppskatta hur mycket energi man kan effektbalansera med.
+            visibility:
+              - condition: state
+                entity: input_boolean.texthelp
+                state: "on"
+          - type: heading
+            heading: Status
+            heading_style: subtitle
+          - type: entities
+            entities:
+              - entity: sensor.power_tariff_status
+          - type: tile
+            entity: input_boolean.use_battery_override
+            tap_action:
+              action: none
+            icon_tap_action:
+              action: none
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: markdown
+            content: >-
+              *Use Battery Override* <br/> 
+
+
+              Här visas om batteriet nyttjas för självanvändning, antingen
+              automatiskt av systemet, t ex genom Peak Shaving nedan, eller
+              manuellt.
+            visibility:
+              - condition: state
+                entity: input_boolean.texthelp
+                state: "on"
+            grid_options:
+              columns: 12
+              rows: auto
+          - type: heading
+            heading: Input
+            heading_style: subtitle
+          - type: tile
+            entity: input_datetime.peak_tariff_time
+          - type: tile
+            entity: input_datetime.off_peak_tariff_time
+          - type: entities
+            entities:
+              - entity: automation.peak_shaving
+            state_color: true
+          - type: markdown
+            content: >-
+              *Peak Shaving* <br/> 
+
+
+              Här visas om funktionen för att kapa medeleffekttoppen under
+              innevarande timme är aktiverad.
+            visibility:
+              - condition: state
+                entity: input_boolean.texthelp
+                state: "on"
+            grid_options:
+              columns: 12
+              rows: auto
+          - type: heading
+            heading: Daily Energy consumption
+            heading_style: subtitle
+          - type: tile
+            entity: sensor.daily_energy_peak
+          - type: tile
+            entity: sensor.daily_energy_off_peak
+          - chart_type: bar
+            period: hour
+            type: statistics-graph
+            entities:
+              - sensor.daily_energy_peak
+              - sensor.daily_energy_off_peak
+            stat_types:
+              - change
+            days_to_show: 7
+            hide_legend: false
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Monthly Peaks
+            heading_style: title
+          - type: markdown
+            content: |
+              Se respektive nätägare.
+
+              För Ellevio, logga in på [Mina sidor](https://www.ellevio.se/privat/mina-sidor/Login/).
+        column_span: 1

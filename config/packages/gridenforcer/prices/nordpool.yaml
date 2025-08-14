@@ -1,0 +1,398 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+prices_nordpool:
+  sensor:
+    - platform: template
+      sensors:
+        electricity_price_buy:
+          friendly_name: "Electricity Price Buy"
+          icon_template: mdi:cash-minus
+          unit_of_measurement: "SEK/kWh"
+          value_template: >-
+            {{(states('sensor.spot_price_electricity') | float('unavailable') * (1 + states('input_number.vat') | float(0) / 100) + states('input_number.kwh_extra_import') | float(0)) | round(3)}}
+          attribute_templates:
+            max: >
+              {{(state_attr('sensor.spot_price_electricity','max') | float('unavailable') * (1 + states('input_number.vat') | float(0) / 100) + states('input_number.kwh_extra_import') | float(0)) | round(3)}}
+            average: >
+              {{(state_attr('sensor.spot_price_electricity','average') | float('unavailable') * (1 + states('input_number.vat') | float(0) / 100) + states('input_number.kwh_extra_import') | float(0)) | round(3)}}
+            min: >
+              {{(state_attr('sensor.spot_price_electricity','min') | float('unavailable') * (1 + states('input_number.vat') | float(0) / 100) + states('input_number.kwh_extra_import') | float(0)) | round(3)}}
+            times_today: >
+              {% set date = now().strftime("%Y-%m-%d") %}
+              {{ date + ' 00:00:00',
+                 date + ' 01:00:00',
+                 date + ' 02:00:00',
+                 date + ' 03:00:00',
+                 date + ' 04:00:00',
+                 date + ' 05:00:00',
+                 date + ' 06:00:00',
+                 date + ' 07:00:00',
+                 date + ' 08:00:00',
+                 date + ' 09:00:00',
+                 date + ' 10:00:00',
+                 date + ' 11:00:00',
+                 date + ' 12:00:00',
+                 date + ' 13:00:00',
+                 date + ' 14:00:00',
+                 date + ' 15:00:00',
+                 date + ' 16:00:00',
+                 date + ' 17:00:00',
+                 date + ' 18:00:00',
+                 date + ' 19:00:00',
+                 date + ' 20:00:00',
+                 date + ' 21:00:00',
+                 date + ' 22:00:00',
+                 date + ' 23:00:00' }}
+            prices_today: >
+              {% set vat = 1 + states('input_number.vat') | float(0) / 100 %}
+              {% set extra = states('input_number.kwh_extra_import') | float(0) %}
+              {% set values = [ 
+                 (state_attr('sensor.spot_price_electricity','today')[0] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[1] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[2] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[3] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[4] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[5] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[6] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[7] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[8] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[9] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[10] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[11] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[12] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[13] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[14] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[15] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[16] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[17] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[18] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[19] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[20] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[21] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[22] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[23] | float('unavailable') * vat + extra) | round(3)
+                ] %}
+              {{values}}
+            times_tomorrow: >
+              {% set date = (now() + timedelta(days=1)).strftime("%Y-%m-%d") %}
+              {{ date + ' 00:00:00',
+                 date + ' 01:00:00',
+                 date + ' 02:00:00',
+                 date + ' 03:00:00',
+                 date + ' 04:00:00',
+                 date + ' 05:00:00',
+                 date + ' 06:00:00',
+                 date + ' 07:00:00',
+                 date + ' 08:00:00',
+                 date + ' 09:00:00',
+                 date + ' 10:00:00',
+                 date + ' 11:00:00',
+                 date + ' 12:00:00',
+                 date + ' 13:00:00',
+                 date + ' 14:00:00',
+                 date + ' 15:00:00',
+                 date + ' 16:00:00',
+                 date + ' 17:00:00',
+                 date + ' 18:00:00',
+                 date + ' 19:00:00',
+                 date + ' 20:00:00',
+                 date + ' 21:00:00',
+                 date + ' 22:00:00',
+                 date + ' 23:00:00' }}
+            prices_tomorrow: >
+              {% set vat = 1 + states('input_number.vat') | float(0) / 100 %}
+              {% set extra = states('input_number.kwh_extra_import') | float(0) %}
+              {% set values = [ 
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[0] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[1] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[2] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[3] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[4] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[5] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[6] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[7] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[8] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[9] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[10] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[11] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[12] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[13] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[14] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[15] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[16] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[17] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[18] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[19] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[20] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[21] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[22] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[23] | float('unavailable') * vat + extra) | round(3)
+                ] %}
+              {{values}}
+            prices_all: >
+              {% set vat = 1 + states('input_number.vat') | float(0) / 100 %}
+              {% set extra = states('input_number.kwh_extra_import') | float(0) %}
+              {% set values = [ 
+                 (state_attr('sensor.spot_price_electricity','today')[0] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[1] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[2] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[3] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[4] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[5] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[6] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[7] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[8] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[9] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[10] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[11] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[12] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[13] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[14] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[15] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[16] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[17] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[18] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[19] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[20] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[21] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[22] | float('unavailable') * vat + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[23] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[0] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[1] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[2] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[3] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[4] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[5] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[6] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[7] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[8] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[9] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[10] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[11] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[12] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[13] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[14] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[15] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[16] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[17] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[18] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[19] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[20] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[21] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[22] | float('unavailable') * vat + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[23] | float('unavailable') * vat + extra) | round(3)
+                ] %}
+              {{values}}
+
+        #-----------------------------------------------------------------------------------------------------------------------------------
+
+        electricity_price_sell:
+          friendly_name: "Electricity Price Sell"
+          icon_template: mdi:cash-plus
+          unit_of_measurement: "SEK/kWh"
+          value_template: >
+            {{(states('sensor.spot_price_electricity') | float('unavailable') + states('input_number.kwh_extra_export') | float('unavailable')) | round(3)}}
+          availability_template: "{{ state_attr('sensor.spot_price_electricity','today') is not none}}"
+          attribute_templates:
+            max: >
+              {{(state_attr('sensor.spot_price_electricity','max') | float('unavailable') + states('input_number.kwh_extra_export') | float('unavailable')) | round(3)}}
+            average: >
+              {{(state_attr('sensor.spot_price_electricity','average') | float('unavailable') + states('input_number.kwh_extra_export') | float('unavailable')) | round(3)}}
+            min: >
+              {{(state_attr('sensor.spot_price_electricity','min') | float('unavailable') + states('input_number.kwh_extra_export') | float('unavailable')) | round(3)}}
+            times_today: >
+              {% set date = now().strftime("%Y-%m-%d") %}
+              {{ date + ' 00:00:00',
+                 date + ' 01:00:00',
+                 date + ' 02:00:00',
+                 date + ' 03:00:00',
+                 date + ' 04:00:00',
+                 date + ' 05:00:00',
+                 date + ' 06:00:00',
+                 date + ' 07:00:00',
+                 date + ' 08:00:00',
+                 date + ' 09:00:00',
+                 date + ' 10:00:00',
+                 date + ' 11:00:00',
+                 date + ' 12:00:00',
+                 date + ' 13:00:00',
+                 date + ' 14:00:00',
+                 date + ' 15:00:00',
+                 date + ' 16:00:00',
+                 date + ' 17:00:00',
+                 date + ' 18:00:00',
+                 date + ' 19:00:00',
+                 date + ' 20:00:00',
+                 date + ' 21:00:00',
+                 date + ' 22:00:00',
+                 date + ' 23:00:00' }}
+            prices_today: >
+              {% set extra = states('input_number.kwh_extra_export') | float(0) %}
+              {% set values = [ 
+                 (state_attr('sensor.spot_price_electricity','today')[0] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[1] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[2] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[3] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[4] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[5] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[6] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[7] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[8] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[9] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[10] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[11] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[12] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[13] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[14] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[15] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[16] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[17] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[18] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[19] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[20] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[21] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[22] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[23] | float('unavailable') + extra) | round(3)
+                 ] %}
+              {{values}}
+            times_tomorrow: >
+              {% set date = (now() + timedelta(days=1)).strftime("%Y-%m-%d") %}
+              {{ date + ' 00:00:00',
+                 date + ' 01:00:00',
+                 date + ' 02:00:00',
+                 date + ' 03:00:00',
+                 date + ' 04:00:00',
+                 date + ' 05:00:00',
+                 date + ' 06:00:00',
+                 date + ' 07:00:00',
+                 date + ' 08:00:00',
+                 date + ' 09:00:00',
+                 date + ' 10:00:00',
+                 date + ' 11:00:00',
+                 date + ' 12:00:00',
+                 date + ' 13:00:00',
+                 date + ' 14:00:00',
+                 date + ' 15:00:00',
+                 date + ' 16:00:00',
+                 date + ' 17:00:00',
+                 date + ' 18:00:00',
+                 date + ' 19:00:00',
+                 date + ' 20:00:00',
+                 date + ' 21:00:00',
+                 date + ' 22:00:00',
+                 date + ' 23:00:00' }}
+            prices_tomorrow: >
+              {% set extra = states('input_number.kwh_extra_export') | float(0) %}
+              {% set values = [ 
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[0] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[1] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[2] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[3] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[4] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[5] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[6] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[7] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[8] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[9] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[10] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[11] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[12] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[13] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[14] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[15] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[16] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[17] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[18] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[19] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[20] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[21] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[22] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[23] | float('unavailable') + extra) | round(3)
+                ] %}
+              {{values}}
+            prices_all: >
+              {% set extra = states('input_number.kwh_extra_export') | float(0) %}
+              {% set values = [ 
+                 (state_attr('sensor.spot_price_electricity','today')[0] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[1] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[2] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[3] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[4] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[5] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[6] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[7] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[8] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[9] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[10] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[11] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[12] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[13] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[14] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[15] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[16] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[17] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[18] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[19] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[20] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[21] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[22] | float('unavailable') + extra) | round(3),
+                 (state_attr('sensor.spot_price_electricity','today')[23] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[0] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[1] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[2] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[3] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[4] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[5] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[6] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[7] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[8] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[9] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[10] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[11] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[12] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[13] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[14] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[15] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[16] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[17] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[18] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[19] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[20] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[21] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[22] | float('unavailable') + extra) | round(3),
+                 'unavailable' if state_attr('sensor.spot_price_electricity','tomorrow_valid') == False else (state_attr('sensor.spot_price_electricity','tomorrow')[23] | float('unavailable') + extra) | round(3)
+                ] %}
+              {{values}}
+
+  automation:
+    - id: restart_ha_on_nordpool_failure
+      alias: Restart HA on Nordpool Failure
+      mode: single
+      triggers:
+        - trigger: template
+          value_template: >
+            {{ state_attr('sensor.spot_price_electricity', 'today') == [] }}
+          for:
+            minutes: 5
+      actions:
+        - action: homeassistant.restart

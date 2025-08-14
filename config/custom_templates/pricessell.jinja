@@ -1,0 +1,24 @@
+{% macro electricity_price_sell_sorted(price_sell_entity, hours_to_charge, start_time, end_time, sort_order=false) %}
+{%- set data = namespace(list=[]) -%}
+{%- set prices_all = state_attr(price_sell_entity,'prices_all') | list -%}
+{%- set prices_all_length = prices_all | length -%}
+{%- set current_hour = now().hour -%}
+{%- if end_time <= current_hour -%}
+  {%- set hours_to_consider = (24 - start_time) + end_time -%}
+{%- else -%}
+  {# Temporary fix below, we would rather the limit to be static during #}
+  {# the whole period and thus consider the time also before 0, but we need #}
+  {# to save it before it gets lost during the update at midnight #}
+  {%- set start_time = 0 -%}
+  {%- set hours_to_consider = end_time - start_time -%}
+{%- endif -%}
+{%- for i in range(0,hours_to_consider) -%}
+  {%- set element = prices_all[start_time + i] | float('unavailable') -%}
+  {%- if (element != 'unavailable') -%}
+    {%- set data.list = data.list + [ element ] -%}
+  {%- endif -%}
+{%- endfor %}
+{%- set sorted_list = data.list | sort(reverse=sort_order) -%}
+{%- set hours_to_charge_limited = [hours_to_charge, data.list | length ] | min -%}
+{{- (sorted_list[hours_to_charge_limited - 1] | float(0)) | round(3) -}}
+{% endmacro %}

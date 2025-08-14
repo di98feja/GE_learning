@@ -1,0 +1,39 @@
+views:
+  - title: Home
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Battery Analysis
+            heading_style: title
+          - type: history-graph
+            entities:
+              - entity: sensor.solax1_battery_soc
+            hours_to_show: 24
+            refresh_interval: 0
+            title: Daily SOC
+            logarithmic_scale: true
+          - type: history-graph
+            entities:
+              - entity: sensor.solax1_battery_input_energy_today
+              - entity: sensor.solax2_battery_input_energy_today
+            hours_to_show: 24
+            refresh_interval: 0
+            title: Daily Battery Input Energy
+            logarithmic_scale: false
+          - type: history-graph
+            entities:
+              - entity: sensor.solax1_battery_output_energy_today
+              - entity: sensor.solax2_battery_output_energy_today
+            hours_to_show: 24
+            refresh_interval: 0
+            logarithmic_scale: false
+            title: Daily Battery Output Energy
+          - type: entities
+            entities:
+              - entity: sensor.solax1_battery_input_energy_today
+              - entity: sensor.solax1_battery_output_energy_today
+    type: sections
+    max_columns: 4
+    icon: mdi:battery-unknown
+    cards: []

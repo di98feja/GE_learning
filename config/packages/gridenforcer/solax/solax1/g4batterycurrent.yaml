@@ -1,0 +1,168 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+solax_solax1_g4batterycurrent:
+  automation:
+    - id: solax1_set_charge_current
+      alias: Solax1 Set Charge Current
+      mode: restart
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+        - platform: state
+          entity_id: input_number.solax1_charge_current
+      condition: "{{ states('sensor.solax1_max_charge_current') | float(0) !=
+                     states('input_number.solax1_charge_current') | float(0) }}"
+      action:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: "36"
+            value: '{{ (states("input_number.solax1_charge_current") | float(0) | multiply(10)) | float(0) }}'
+
+    - id: solax1_set_discharge_current
+      alias: Solax1 Set Discharge Current
+      mode: restart
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+        - platform: state
+          entity_id: input_number.solax1_discharge_current
+      condition: "{{ states('sensor.solax1_max_discharge_current') | float(0) !=
+                     states('input_number.solax1_discharge_current') | float(0) }}"
+      action:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: "37"
+            value: '{{ (states("input_number.solax1_discharge_current") | float(0) | multiply(10)) | float(0) }}'
+
+    #****************************************************************************************************************
+
+    - id: solax1_set_main_breaker_current_limit
+      alias: Solax1 Set Main Breaker Current Limit
+      mode: restart
+      trigger:
+        - platform: state
+          entity_id: input_number.max_grid_current
+      action:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: "113"
+            value: '{{ (states("input_number.max_grid_current") | float(0)) | round(0) }}'
+
+    #****************************************************************************************************************
+
+    - id: solax1_calculate_charge_current
+      alias: Solax1 Calculate Charge Current
+      mode: restart
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+      action:
+        - service: input_number.set_value
+          data:
+            # binary_sensor.flower_fcr_d_down != 'on' below also covers
+            # the case when it is 'unknown'. It should normally have
+            # a value when MQTT topic activate has the retain flag set though.
+            value: >
+              {% if (states('binary_sensor.solax1_soc_max') == 'on' and
+                     states('binary_sensor.flower_fcr_d_down') != 'on') or
+                    (states('binary_sensor.charge_battery_grid') == 'off' and
+                     states('binary_sensor.import_to_battery') != 'on')  %}
+                0
+              {% elif states('binary_sensor.import_to_battery') == 'on' or
+                      states('sensor.solax1_inverter_state') == 'EPS' %}
+                30
+              {% else %}
+                {{ states('input_number.solax1_max_charge_current') | float(0) }}
+              {% endif %}
+          target:
+            entity_id: input_number.solax1_charge_current
+
+    - id: solax1_calculate_discharge_current
+      alias: Solax1 Calculate Discharge Current
+      mode: restart
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+      action:
+        - service: input_number.set_value
+          data:
+            value: >
+              {% if (states('binary_sensor.solax1_soc_backup') == 'off' and
+                     states('binary_sensor.flower_fcr_d_up') != 'on' and
+                     states('sensor.solax1_inverter_state') != 'EPS') or
+                    states('binary_sensor.discharge_battery') == 'off' %}
+                  0
+              {% elif states('binary_sensor.export_from_battery') == 'on' or
+                      states('sensor.solax1_inverter_state') == 'EPS' %}
+                  30
+              {% else %}
+                  {{ states('input_number.solax1_max_discharge_current') | float(0) }}
+              {% endif %}
+
+          target:
+            entity_id: input_number.solax1_discharge_current
+
+  #------------------------------------------------------------------------
+
+  input_number:
+    solax1_max_charge_current:
+      name: Solax1 Max Charge Current
+      min: 0
+      max: 30
+      step: 0.1
+      unit_of_measurement: "A"
+      icon: mdi:current-dc
+      mode: box
+
+    solax1_max_discharge_current:
+      name: Solax1 Max Discharge Current
+      min: 0
+      max: 30
+      step: 0.1
+      unit_of_measurement: "A"
+      icon: mdi:current-dc
+      mode: box
+
+    solax1_charge_current:
+      name: Solax1 Charge Current
+      min: 0
+      max: 30
+      step: 0.1
+      unit_of_measurement: "A"
+      icon: mdi:current-dc
+      mode: slider
+
+    solax1_discharge_current:
+      name: Solax1 Discharge Current
+      min: 0
+      max: 30
+      step: 0.1
+      unit_of_measurement: "A"
+      icon: mdi:current-dc
+      mode: slider

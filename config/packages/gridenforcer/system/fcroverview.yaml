@@ -1,0 +1,247 @@
+calc_sensors:
+  sensor:
+    - platform: template
+      sensors:
+        #HUVUDSÄKRINGENS MAX EFFEKT
+        fuse_max:
+          value_template: "{{ states('input_number.max_grid_current') | float(0) * 3 * 230 }}"
+
+        #INVERTERNS TEORETISKA EFFEKT, med G2-25ADC max ström/G4-30ADC ström, och antalet batterier (115.2V per batteri)
+        # SOLAX1
+        battery1_max_power:
+          value_template: >-
+            {% from 'fcr.jinja' import battery_max_power %}
+            {{ battery_max_power('sensor.solax1_battery_install_capacity') }}
+        # SOLAX2 hänsyn tas till om den inte finns, isf 0
+        battery2_max_power:
+          value_template: >-
+            {% from 'fcr.jinja' import battery_max_power %}
+            {{ battery_max_power('sensor.solax2_battery_install_capacity') }}
+        # SOLAX3 hänsyn tas till om den inte finns, isf 0
+        battery3_max_power:
+          value_template: >-
+            {% from 'fcr.jinja' import battery_max_power %}
+            {{ battery_max_power('sensor.solax3_battery_install_capacity') }}
+        # SOLAX TOTAL BATTERY MAX POWER
+        total_battery_max_power:
+          value_template: >-
+            {{ (states('sensor.battery1_max_power') | float(0) +
+              states('sensor.battery2_max_power') | float(0) +
+              states('sensor.battery3_max_power') | float(0)) | float(0) }}
+
+        # BERÄKNING AV MAX BATTERIEFFEKT VID LADDNING m.a.p. soc och battemp
+        # SOLAX1
+        bms_calc_max_discharging_power_solax1:
+          friendly_name: BMS calc max discharging power Solax1
+          value_template: >-
+            {% from 'fcr.jinja' import bms_calc_max_power %}
+            {{ bms_calc_max_power('sensor.solax1_battery_install_capacity', 'sensor.solax1_bms_discharge_max_current') }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.solax1_battery_install_capacity", "unavailable") and
+               not is_state("sensor.solax1_bms_discharge_max_current", "unavailable") and
+               not is_state("sensor.gridenforcer_git_branch", "unavailable") }}
+        # SOLAX2
+        bms_calc_max_discharging_power_solax2:
+          friendly_name: BMS calc max discharging power Solax2
+          value_template: >-
+            {% from 'fcr.jinja' import bms_calc_max_power %}
+            {{ bms_calc_max_power('sensor.solax2_battery_install_capacity', 'sensor.solax2_bms_discharge_max_current') }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.solax2_battery_install_capacity", "unavailable") and
+               not is_state("sensor.solax2_bms_discharge_max_current", "unavailable") and
+               not is_state("sensor.gridenforcer_git_branch", "unavailable") }}
+        # SOLAX3
+        bms_calc_max_discharging_power_solax3:
+          friendly_name: BMS calc max discharging power Solax3
+          value_template: >-
+            {% from 'fcr.jinja' import bms_calc_max_power %}
+            {{ bms_calc_max_power('sensor.solax3_battery_install_capacity', 'sensor.solax3_bms_discharge_max_current') }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.solax3_battery_install_capacity", "unavailable") and
+               not is_state("sensor.solax3_bms_discharge_max_current", "unavailable") and
+               not is_state("sensor.gridenforcer_git_branch", "unavailable") }}
+        # Total max charging power for all Solax systems
+        bms_calc_max_discharging_power:
+          value_template: >-
+            {{ (states('sensor.bms_calc_max_discharging_power_solax1') | float(0) +
+                states('sensor.bms_calc_max_discharging_power_solax2') | float(0) +
+                states('sensor.bms_calc_max_discharging_power_solax3') | float(0)) | float(0) }}
+        # BERÄKNING AV MAX BATTERIEFFEKT VID LADDNING m.a.p. soc och battemp
+        # SOLAX1
+        bms_calc_max_charging_power_solax1:
+          friendly_name: BMS calc max charging power Solax1
+          value_template: >-
+            {% from 'fcr.jinja' import bms_calc_max_power %}
+            {{ bms_calc_max_power('sensor.solax1_battery_install_capacity', 'sensor.solax1_bms_charge_max_current') }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.solax1_battery_install_capacity", "unavailable") and
+               not is_state("sensor.solax1_bms_charge_max_current", "unavailable") and
+               not is_state("sensor.gridenforcer_git_branch", "unavailable") }}
+        # SOLAX2
+        bms_calc_max_charging_power_solax2:
+          friendly_name: BMS calc max charging power Solax2
+          value_template: >-
+            {% from 'fcr.jinja' import bms_calc_max_power %}
+            {{ bms_calc_max_power('sensor.solax2_battery_install_capacity', 'sensor.solax2_bms_charge_max_current') }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.solax2_battery_install_capacity", "unavailable") and
+               not is_state("sensor.solax2_bms_charge_max_current", "unavailable") and
+               not is_state("sensor.gridenforcer_git_branch", "unavailable") }}
+        # SOLAX3
+        bms_calc_max_charging_power_solax3:
+          friendly_name: BMS calc max charging power Solax3
+          value_template: >-
+            {% from 'fcr.jinja' import bms_calc_max_power %}
+            {{ bms_calc_max_power('sensor.solax3_battery_install_capacity', 'sensor.solax3_bms_charge_max_current') }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.solax3_battery_install_capacity", "unavailable") and
+               not is_state("sensor.solax3_bms_charge_max_current", "unavailable") and
+               not is_state("sensor.gridenforcer_git_branch", "unavailable") }}
+        # Total max charging power for all Solax systems
+        bms_calc_max_charging_power:
+          value_template: >-
+            {{ (states('sensor.bms_calc_max_charging_power_solax1') | float(0) +
+                states('sensor.bms_calc_max_charging_power_solax2') | float(0) +
+                states('sensor.bms_calc_max_charging_power_solax3') | float(0)) | float(0) }}
+
+        # SOLAX TOTAL RATED POWER
+        total_inverter_rate_power:
+          value_template: >-
+            {{ (states('sensor.solax1_inverter_rate_power') | float(0) +
+              states('sensor.solax2_inverter_rate_power') | float(0) +
+              states('sensor.solax3_inverter_rate_power') | float(0)) | float(0) }}
+
+        # Letar fram det minsta av ovan nämda fall och plockar ut det minsta
+        # Sensor inverter typ, se ovan. Antingen 10kw eller 15kw (eller summan av alla inverters effekt)
+        # Huvudsäkringens begränsning.
+        # En begränsning om man har färre batterier än fyra.
+        site_max_power:
+          value_template: >
+            {% set mylist = [
+              states("sensor.total_inverter_rate_power")|float(0),
+              states("sensor.fuse_max")|float(0),
+              states("sensor.total_battery_max_power")|float(0)
+            ] %}
+            {{ mylist|min }}
+
+        total_solar_power:
+          friendly_name: "Total solar Power"
+          unit_of_measurement: "W"
+          value_template: >-
+            {{ (states('sensor.solax1_pv1_power') | float(0) + states('sensor.solax1_pv2_power') | float(0) +
+                states('sensor.solax2_pv1_power') | float(0) + states('sensor.solax2_pv2_power') | float(0) +
+                states('sensor.solax3_pv1_power') | float(0) + states('sensor.solax3_pv2_power') | float(0)) | round(2) }}
+
+        # Beräkning av tillgänglig FCR-D ner (WATT)
+        # Vi laddar batterierna
+        # Vilket av följande blir minst?
+        # 1) Maximal effekt på huvudsäkringen - hur mycket vi importerar
+        # 2) Den del av inverterbegränsning/säkringsbegränsning/antalbatterier-begränsning - Effekt på batterier
+        # 3) Säkringsstorleksbegränsning
+        available_power_fcr_n:
+          value_template: >
+            {% set difference_1 = states("sensor.fuse_max") | float(0) - states("sensor.momentary_active_import") | float(0) %}
+            {% set difference_2 = states("sensor.site_max_power") | float(0) - states("sensor.battery_charge_power") | float(0) %}
+            {% set difference_3 = states("sensor.site_max_power") | float(0) %}
+            {% set difference_4 = states("sensor.bms_calc_max_charging_power") | float(0) %}
+            {% set mylist = [difference_1, difference_2, difference_3, difference_4] %}
+            {% set min_value = mylist | min | float(2) %}
+            {{ min_value if min_value >= 0 else 0 }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.fuse_max", "unknown") and
+               not is_state("sensor.momentary_active_import", "unknown") and
+               not is_state("sensor.site_max_power", "unknown") and
+               not is_state("sensor.battery_charge_power", "unknown") and
+               not is_state("sensor.bms_calc_max_charging_power", "unknown")
+                }}
+        #  Beräkning av tillgänglig FCR-D upp (WATT)
+        # Urladdning av batterier
+        # Maximal effekt på huvudsäkring - hur mycket vi exporterar
+        # Inverterns effektkapacitet - solproduktionen på bägge slingor
+        # Den del av inverterbegränsning/säkringsbegränsning/antalbatterier-begränsning - batterieffekten urladdning
+        available_power_fcr_u:
+          value_template: >
+            {% set difference_1 = states("sensor.fuse_max") | float(0) - states("sensor.momentary_active_export") | float(0) %}
+            {% set difference_2 = states("sensor.site_max_power") | float(0) - states("sensor.battery_discharge_power") | float(0) %}
+            {% set difference_3 = states("sensor.total_inverter_rate_power") | float(0) - states("sensor.total_solar_power") | float(0) %}
+            {% set difference_4 = states("sensor.site_max_power") | float(0) %}
+            {% set difference_5 = states("sensor.bms_calc_max_discharging_power") | float(0) %}
+            {% set mylist = [difference_1, difference_2, difference_3, difference_4, difference_5] %}
+            {% set min_value = mylist | min | float(2) %}
+            {{ min_value if min_value >= 0 else 0 }}
+          unit_of_measurement: "W"
+          availability_template: >-
+            {{ not is_state("sensor.fuse_max", "unknown") and
+               not is_state("sensor.momentary_active_export", "unknown") and
+               not is_state("sensor.site_max_power", "unknown") and
+               not is_state("sensor.battery_discharge_power", "unknown") and
+               not is_state("sensor.total_inverter_rate_power", "unknown") and
+               not is_state("sensor.total_solar_power", "unknown") and
+               not is_state("sensor.bms_calc_max_discharging_power", "unknown")
+                }}
+
+        # Bertäkning av FCR-ner %
+        fcrn_proc:
+          friendly_name: FCR-D down proc
+          value_template: "{{ (states('sensor.available_power_fcr_n') | float(0) / states('sensor.site_max_power') | float(0) * 100) | round(1) }}"
+          unit_of_measurement: "%"
+          availability_template: >-
+            {{ not is_state("sensor.available_power_fcr_n", "unavailable") and
+               not is_state("sensor.site_max_power", "unavailable") and
+               states('sensor.site_max_power') | float != 0 }}
+
+        # Bertäkning av FCR-ner %
+        fcru_proc:
+          friendly_name: FCR-D up proc
+          value_template: "{{ (states('sensor.available_power_fcr_u') | float(0) / states('sensor.site_max_power') | float(0) * 100) | round(1) }}"
+          unit_of_measurement: "%"
+          availability_template: >-
+            {{ not is_state("sensor.available_power_fcr_u", "unavailable") and
+               not is_state("sensor.site_max_power", "unavailable") and
+               states('sensor.site_max_power') | float != 0 }}
+
+#För visning FCR-view
+fcrinput:
+  input_boolean:
+    texthelp:
+      name: Activate help
+      initial: off
+  sensor:
+    - platform: template
+      sensors:
+        gridenforcer_fcr_d_daily:
+          friendly_name: "GridEnforcer FCR-D daily total"
+          value_template: "{{ '%.2f' | format(states('sensor.svk_mimer_earnings_today_fcr_d') | float(0) * 0.25) }}"
+          unit_of_measurement: "kr/kW"
+          availability_template: >-
+            {{ not is_state("sensor.svk_mimer_earnings_today_fcr_d", "unavailable") }}
+        gridenforcer_fcr_d_upp_daily:
+          friendly_name: "GridEnforcer FCR-D upp daily total"
+          value_template: "{{ '%.2f' | format(states('sensor.svk_mimer_earnings_today_fcr_d_up') | float(0) * 0.25) }}"
+          unit_of_measurement: "kr/kW"
+          availability_template: >-
+            {{ not is_state("sensor.svk_mimer_earnings_today_fcr_d_up", "unavailable") }}
+        gridenforcer_fcr_d_ner_daily:
+          friendly_name: "GridEnforcer FCR-D ner total"
+          value_template: "{{ '%.2f' | format(states('sensor.svk_mimer_earnings_today_fcr_d_down') | float(0) * 0.25) }}"
+          unit_of_measurement: "kr/kW"
+          availability_template: >-
+            {{ not is_state("sensor.svk_mimer_earnings_today_fcr_d_down", "unavailable") }}
+
+        calculate_min_temp:
+          friendly_name: Battery min allowed temperature
+          value_template: >-
+            {% if states('sensor.solax1_inverter_rate_power')|float(0) > 11999 %}
+              20
+            {% else %}
+              17
+            {% endif %}
+          availability_template: >-
+            {{ not is_state("sensor.solax1_inverter_rate_power", "unavailable") }}

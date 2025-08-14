@@ -1,0 +1,139 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+power_flower:
+  automation:
+    - id: flower_data
+      alias: Flower Data
+      mode: restart
+      initial_state: false
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+      action:
+        - service: mqtt.publish
+          data:
+            qos: 1
+            retain: true
+            topic: !secret BATPower
+            payload: '{"BATPower":{{ states("sensor.solax1_battery_power") | float(0) }},"time":{{ now().timestamp() }}}'
+
+        - service: mqtt.publish
+          data:
+            qos: 1
+            retain: true
+            topic: !secret INVPower
+            payload: '{"INVPower":{{ states("sensor.solax1_ac_power") | float(0) }},"time":{{ now().timestamp() }}}'
+
+        - service: mqtt.publish
+          data:
+            qos: 1
+            retain: true
+            topic: !secret GRIDPower
+            payload: '{"GRIDPower":{{ 0 - states("sensor.solax1_grid_power") | float(0) }},"time":{{ now().timestamp() }}}'
+
+        - service: mqtt.publish
+          data:
+            qos: 1
+            retain: true
+            topic: !secret BATSOC
+            payload: '{"BATSOC":{{ states("sensor.solax_soc_total") | float(0) }},"time":{{ now().timestamp() }}}'
+
+        - service: mqtt.publish
+          data:
+            qos: 1
+            retain: true
+            topic: !secret PVPower
+            payload: '{"PVPower":{{ states("sensor.solax_pv_power_total") | float(0) }},"time":{{ now().timestamp() }}}'
+
+    - id: flower_off
+      alias: Flower Off
+      mode: single
+      trigger:
+        - platform: state
+          entity_id: binary_sensor.flower_fcr_d_up
+          to: "on"
+          for: "00:21:00"
+        - platform: state
+          entity_id: binary_sensor.flower_fcr_d_down
+          to: "on"
+          for: "00:21:00"
+      action:
+        - service: mqtt.publish
+          data:
+            topic: !secret activate
+            payload: 0
+
+    - id: flower_birth
+      alias: Flower Birth
+      mode: single
+      trigger:
+        - platform: homeassistant
+          event: start
+      action:
+        - service: mqtt.publish
+          data:
+            qos: 1
+            retain: true
+            topic: !secret LWT
+            payload: connected
+
+    - id: flower_last_will
+      alias: Flower Last Will
+      mode: single
+      trigger:
+        - platform: homeassistant
+          event: shutdown
+      action:
+        - service: mqtt.publish
+          data:
+            qos: 1
+            retain: true
+            topic: !secret LWT
+            payload: disconnected
+
+  #***************************************************************************************************
+
+  mqtt:
+    binary_sensor:
+      - name: "Flower FCR-D Up"
+        state_topic: !secret activate
+        payload_on: "1"
+        payload_off: "0"
+        qos: 1
+
+      - name: "Flower FCR-D Down"
+        state_topic: !secret activate
+        payload_on: "-1"
+        payload_off: "0"
+        qos: 1
+
+  #***************************************************************************************************
+
+  counter:
+    fcr_d_up_counter:
+      name: Flower FCR-D Up Counter
+      icon: mdi:horizontal-rotate-counterclockwise
+
+    fcr_d_down_counter:
+      name: Flower FCR-D Down Counter
+      icon: mdi:axis-z-rotate-counterclockwise

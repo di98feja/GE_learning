@@ -1,22 +1,150 @@
 homeassistant:
-  name: Grid Enforcer Test
-  latitude: 59.3293
-  longitude: 18.0686
-  elevation: 0
-  unit_system: metric
-  time_zone: Europe/Stockholm
-  
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 127.0.0.1
-    
-logger:
-  default: info
-  logs:
-    custom_components.grid_enforcer: debug
-    
-# Grid Enforcer Integration (placeholder)
-grid_enforcer:
-  # Configuration will be added during development
-  
+  customize: !include customize.yaml
+  packages: !include_dir_merge_named packages/
+  debug: false
+
+#------------------------------------------------------------------------
+
+automation: !include automations.yaml
+
+#------------------------------------------------------------------------
+
+config:
+
+#------------------------------------------------------------------------
+
+energy:
+
+#------------------------------------------------------------------------
+
+frontend:
+
+#------------------------------------------------------------------------
+
+group: !include groups.yaml
+
+#------------------------------------------------------------------------
+
+history:
+
+#------------------------------------------------------------------------
+
+lovelace:
+  mode: storage
+  dashboards:
+    battery-analysis:
+      mode: yaml
+      title: Battery analysis
+      icon: mdi:battery-unknown
+      show_in_sidebar: true
+      filename: lovelace/battery_analysis_dashboard.yaml
+    fcr-d:
+      mode: yaml
+      title: FCR-D
+      icon: mdi:sine-wave
+      show_in_sidebar: true
+      filename: lovelace/fcr_d_dashboard.yaml
+    power-tariff:
+      mode: yaml
+      title: Power tariffs
+      icon: mdi:transmission-tower
+      show_in_sidebar: true
+      filename: lovelace/power_tariff_dashboard.yaml
+    pv-production-forecast:
+      mode: yaml
+      title: PV production forecast
+      icon: mdi:transmission-tower
+      show_in_sidebar: true
+      filename: lovelace/pv_production_forecast_dashboard.yaml
+
+#------------------------------------------------------------------------
+
+mobile_app:
+
+#------------------------------------------------------------------------
+
+recorder:
+  db_url: mysql://homeassistant:DataIsNeverSafe@core-mariadb/homeassistant?charset=utf8mb4
+  purge_keep_days: 31
+  commit_interval: 20
+  exclude:
+    domains:
+      - calendar
+      - camera
+      - group
+      - media_player
+      - updater
+    entities:
+      - sensor.time
+      - sensor.date
+      - sensor.grid_current_phase_1
+      - sensor.grid_current_phase_2
+      - sensor.grid_current_phase_3
+      - sensor.solax1_l1_feed_in_power
+      - sensor.solax1_l2_feed_in_power
+      - sensor.solax1_l3_feed_in_power
+      - sensor.solax1_l1_voltage
+      - sensor.solax1_l2_voltage
+      - sensor.solax1_l3_voltage
+      - sensor.solax1_l1_power
+      - sensor.solax1_l2_power
+      - sensor.solax1_l3_power
+      - sensor.grid_to_house
+      - sensor.grid_to_battery
+      - sensor.generation_to_grid
+      - sensor.generation_to_battery
+      - sensor.generation_to_house
+      - sensor.battery_to_house
+      - sensor.battery_to_grid
+      - sensor.battery_charge_power
+      - sensor.battery_discharge_power
+      - sensor.spot_price_electricity
+      - automation.flower_data
+      - automation.mqtt_quick_package
+      - automation.solax1_calculate_charge_current
+      - automation.solax1_calculate_discharge_current
+      - automation.solax1_set_charge_current
+      - automation.solax1_set_discharge_current
+      - sensor.solax1_multiple_registers_1
+      - sensor.solax1_multiple_registers_2
+      - sensor.solax1_multiple_registers_3
+      - sensor.solax1_multiple_registers_4
+    event_types:
+      - service_registered
+      - service_removed
+      - service_executed
+      - platform_discovered
+      - homeassistant_start
+      - homeassistant_stop
+      - feedreader
+      - entity_registry_updated
+      - device_registry_updated
+      - panels_updated
+      - call_service
+      - component_loaded
+      - logbook_entry
+      - system_log_event
+      - automation_triggered
+      - script_started
+      - timer_out_of_sync
+
+#------------------------------------------------------------------------
+
+script: !include scripts.yaml
+
+#------------------------------------------------------------------------
+
+sensor: !include sensors.yaml
+
+#------------------------------------------------------------------------
+
+stream:
+
+#------------------------------------------------------------------------
+
+system_health:
+
+#------------------------------------------------------------------------
+
+system_log:
+  fire_event: false

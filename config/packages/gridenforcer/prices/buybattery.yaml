@@ -1,0 +1,101 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+prices_buybattery:
+  binary_sensor:
+    - platform: template
+      sensors:
+        charge_on_next_occasion:
+          friendly_name: "Charge On Next Occasion"
+          icon_template: mdi:cash-minus
+          value_template: >
+            {{ 2 < 3 }}
+
+  #-----------------------------------------------------------------------------------------------------------------------------------
+
+  sensor:
+    - platform: template
+      sensors:
+        electricity_price_limit_charge:
+          friendly_name: "Electricity Price Limit Charge"
+          icon_template: mdi:cash-minus
+          unit_of_measurement: "SEK/kWh"
+          availability_template: "{{ state_attr('sensor.electricity_price_buy','prices_all') is not none}}"
+          value_template: >
+            {% set hours_to_consider = 10 %}
+            {% set hours_to_charge = states('input_number.hours_to_charge') | int(0) %}
+            {# [0:2] below means: consider only the hours in the timestamp, #}
+            {# int conversion removes any leading zeros #}
+            {% set start_time = now().hour %}
+            {% set check_end_time_tomorrow = start_time + hours_to_consider %}
+            {% if check_end_time_tomorrow > 23 %}
+              {% set end_time = check_end_time_tomorrow - 24 %}
+            {% else %}
+              {% set end_time = check_end_time_tomorrow %}
+            {% endif %}
+            {% from 'prices.jinja' import electricity_price_buy_sorted %}
+            {{ electricity_price_buy_sorted('sensor.electricity_price_buy', hours_to_charge, start_time, end_time, false) }}
+
+        #-----------------------------------------------------------------------------------------------------------------------------------
+
+        electricity_price_top:
+          friendly_name: "Electricity Price Top"
+          icon_template: mdi:cash
+          unit_of_measurement: "SEK/kWh"
+          value_template: >
+            {{ state_attr('sensor.electricity_price_buy','max') | float(0) }}
+
+        electricity_price_bottom:
+          friendly_name: "Electricity Price Bottom"
+          icon_template: mdi:cash
+          unit_of_measurement: "SEK/kWh"
+          value_template: >
+            {{ state_attr('sensor.electricity_price_buy','min') | float(0) }}
+
+        charge_limit_battery_sun:
+          friendly_name: "Charge Limit Battery Sun"
+          icon_template: mdi:cash
+          unit_of_measurement: "SEK/kWh"
+          value_template: >
+            {{ (states('sensor.electricity_price_limit_charge') | float(0)) }}
+
+    - platform: template
+      sensors:
+        charge_limit_battery_sun_2:
+          friendly_name: "Charge Limit Battery Sun 2"
+          icon_template: mdi:cash-minus
+          unit_of_measurement: "SEK/kWh"
+          availability_template: "{{ state_attr('sensor.electricity_price_sell','prices_all') is not none}}"
+          value_template: >
+            {% set hours_to_consider = 16 %}
+            {% set hours_to_charge = states('input_number.hours_to_charge') | int(0) %}
+            {# [0:2] below means: consider only the hours in the timestamp, #}
+            {# int conversion removes any leading zeros #}
+            {% set start_time = now().hour %}
+            {% set check_end_time_tomorrow = start_time + hours_to_consider %}
+            {% if check_end_time_tomorrow > 23 %}
+              {% set end_time = check_end_time_tomorrow - 24 %}
+            {% else %}
+              {% set end_time = check_end_time_tomorrow %}
+            {% endif %}
+            {% from 'pricessell.jinja' import electricity_price_sell_sorted %}
+            {{ electricity_price_sell_sorted('sensor.electricity_price_sell', hours_to_charge, start_time, end_time, false) }}

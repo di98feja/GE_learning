@@ -1,0 +1,110 @@
+# MIT License
+#
+# Copyright (c) 2024 Mikael Andersson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+{% macro solax(num) %}
+  {%- if num == 1 -%}
+    {{- states('sensor.solax1_ip_address') -}}
+  {%- elif num == 2 -%}
+    {{- states('sensor.solax2_ip_address') -}}
+  {%- elif num == 3 -%}
+    {{- states('sensor.solax3_ip_address') -}}
+  {%- endif -%}
+{% endmacro %}
+
+{% macro battery_power_total() %}
+  {{ states("sensor.solax1_battery_power") | float(0) +
+     states("sensor.solax2_battery_power") | float(0) +
+     states("sensor.solax3_battery_power") | float(0) }}
+{% endmacro %}
+
+{% macro soc_max() %}
+  {{- ( states('binary_sensor.solax1_soc_max') == 'off' or
+        bool(states('binary_sensor.solax2_soc_max') == 'off', false) or
+        bool(states('binary_sensor.solax3_soc_max') == 'off', false) ) -}}
+{% endmacro %}
+
+{% macro soc_grid_backup() %}
+  {{- ( states('binary_sensor.solax1_soc_grid_backup') == 'off' or
+        bool(states('binary_sensor.solax2_soc_grid_backup') == 'off', false) or
+        bool(states('binary_sensor.solax3_soc_grid_backup') == 'off', false)) -}}
+{% endmacro %}
+
+{% macro soc_backup_any_inverter_fulfilled(state) %}
+  {{- ( states('binary_sensor.solax1_soc_backup') == state or
+        bool(states('binary_sensor.solax2_soc_backup') == state, false) or
+        bool(states('binary_sensor.solax3_soc_backup') == state, false) ) -}}
+{% endmacro %}
+
+{% macro soc_backup_all_inverters_fulfilled(state) %}
+  {{- ( states('binary_sensor.solax1_soc_backup') == state and
+        bool(states('binary_sensor.solax2_soc_backup') == state, true) and
+        bool(states('binary_sensor.solax3_soc_backup') == state, true) ) -}}
+{% endmacro %}
+
+{% macro solar_energy_total() %}
+    {{- states('sensor.solax1_solar_energy_total') | float(0) +
+        states('sensor.solax2_solar_energy_total') | float(0) +
+        states('sensor.solax3_solar_energy_total') | float(0) -}}
+{% endmacro %}
+
+{% macro feed_in_total() %}
+    {{- states('sensor.solax1_feed_in_total') | float(0) +
+        states('sensor.solax2_feed_in_total') | float(0) +
+        states('sensor.solax3_feed_in_total') | float(0) -}}
+{% endmacro %}
+
+{% macro soc_total() %}
+    {{- ((states('sensor.solax1_battery_soc') | int(0) *
+          states('sensor.solax1_battery_install_capacity') | float(0) +
+          states('sensor.solax2_battery_soc') | int(0) *
+          states('sensor.solax2_battery_install_capacity') | float(0) +
+          states('sensor.solax3_battery_soc') | int(0) *
+          states('sensor.solax3_battery_install_capacity') | float(0)) /
+          states('sensor.solax_capacity_total') | float ) | float(0) | round(1) -}}
+{% endmacro %}
+
+{% macro house_energy_to_charge_limit() %}
+  {%- if solax(1) != 'unknown' -%}
+    {%- if ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) > 0) -%}
+      {{- ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) / 100 * states('sensor.solax1_battery_install_capacity') | float(0)) | round(1) -}}
+    {%- else -%}
+      0
+    {%- endif -%}
+  {%- elif solax(2) != 'unknown' -%}
+    {%- if ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) > 0)
+       and ((states('input_number.soc_max') | int(0) - states('sensor.solax2_battery_soc') | int(0)) > 0) -%}
+        {{- ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) / 100 * states('sensor.solax1_battery_install_capacity') | float(0)) | round(1)
+        + ((states('input_number.soc_max') | int(0) - states('sensor.solax2_battery_soc') | int(0)) / 100 * states('sensor.solax2_battery_install_capacity') | float(0)) | round(1) -}}
+    {%- elif ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) > 0)
+       and ((states('input_number.soc_max') | int(0) - states('sensor.solax2_battery_soc') | int(0)) <= 0) -%}
+        {{- ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) / 100 * states('sensor.solax1_battery_install_capacity') | float(0)) | round(1) -}}
+    {%- elif ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) <= 0)
+       and ((states('input_number.soc_max') | int(0) - states('sensor.solax2_battery_soc') | int(0)) > 0) -%}
+        {{- ((states('input_number.soc_max') | int(0) - states('sensor.solax2_battery_soc') | int(0)) / 100 * states('sensor.solax2_battery_install_capacity') | float(0)) | round(1) -}}
+    {%- else -%}
+        0
+    {%- endif -%}
+  {%- elif solax(3) != 'unknown' -%}
+  {%- endif -%}
+{% endmacro %}
+

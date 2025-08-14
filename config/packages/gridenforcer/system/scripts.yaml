@@ -1,0 +1,154 @@
+# MIT License
+#
+# Copyright (c) 2021-2025 Reik Steinert, Mikael Andersson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+system_scripts:
+  script:
+    ha_start:
+      alias: HA Start
+      sequence:
+        - service: mqtt.publish
+          data:
+            topic: !secret activate
+            payload: 0
+            retain: true
+
+        - service: script.turn_on
+          entity_id: script.configure_inverter_solax1
+
+        - if:
+            - condition: state
+              entity_id: sensor.myenergi_version
+              state: "unavailable"
+          then:
+            - service: automation.turn_off
+              entity_id: automation.zappi_1_fast_charging
+            - service: automation.turn_off
+              entity_id: automation.zappi_1_eco_plus_charging
+            - service: automation.turn_off
+              entity_id: automation.zappi_1_stop_charging
+          else:
+            - service: automation.turn_on
+              entity_id: automation.zappi_1_fast_charging
+            - service: automation.turn_on
+              entity_id: automation.zappi_1_eco_plus_charging
+            - service: automation.turn_on
+              entity_id: automation.zappi_1_stop_charging
+
+        - action: script.control_mqtt_automations
+          data:
+            action: "automation.turn_on"
+
+    control_mqtt_automations:
+      alias: Control MQTT Automations
+      sequence:
+        - action: "{{ action }}"
+          entity_id: automation.flower_data
+        - action: "{{ action }}"
+          entity_id: automation.mqtt_quick_package
+        - action: "{{ action }}"
+          entity_id: automation.mqtt_normal_package
+        - action: "{{ action }}"
+          entity_id: automation.mqtt_slow_package
+
+    # Stop MQTT automations during MQTT broker restart
+    # since it renders many errors in the log otherwise.
+    mqtt_restart:
+      alias: MQTT Restart
+      sequence:
+        - action: script.control_mqtt_automations
+          data:
+            action: "automation.turn_off"
+        - action: hassio.addon_restart
+          data:
+            addon: core_mosquitto
+        - delay:
+            seconds: 30
+        - action: script.control_mqtt_automations
+          data:
+            action: "automation.turn_on"
+
+    set_default_values:
+      alias: Set Default Values
+      sequence:
+        - data:
+            entity_id: input_number.hours_to_charge
+            value: 5
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.hours_to_sell
+            value: 1
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.kwh_price_battery
+            value: 0.7
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.vat
+            value: 25
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.kwh_extra_import
+            value: 0.7
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.kwh_extra_export
+            value: 0.7
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.low_price_limit_buy
+            value: 0.3
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.low_price_limit_sell
+            value: 0
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.soc_max
+            value: 80
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.soc_backup
+            value: 30
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.solax1_max_charge_current
+            value: 5
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.solax1_max_discharge_current
+            value: 30
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.export_limit
+            value: 11000
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.force_power
+            value: -11000
+          action: input_number.set_value
+        - data:
+            entity_id: input_number.max_grid_current
+            value: 16
+          action: input_number.set_value
+        - data:
+            entity_id: input_boolean.fix_price_mode
+          action: input_boolean.turn_off

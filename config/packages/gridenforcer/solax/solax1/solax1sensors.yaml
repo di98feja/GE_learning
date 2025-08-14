@@ -1,0 +1,462 @@
+# MIT License
+#
+# Copyright (c) 2021-2024 Reik Steinert, Mikael Andersson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+solax1_solax1sensors:
+  binary_sensor:
+    - platform: template
+      sensors:
+        solax1_soc_max:
+          friendly_name: "Solax1 SOC Max"
+          value_template: >
+            {{ (states('sensor.solax1_battery_soc') | float(0)) >=
+                (states('input_number.soc_max') | float(0)
+                - (0.0 if (states('binary_sensor.solax1_soc_max') == 'off') else 0)
+                - (3.0 if (states('binary_sensor.solax1_soc_max') == 'on') else 0))
+            }}
+
+        solax1_soc_backup:
+          friendly_name: "Solax1 SOC Backup"
+          value_template: >
+            {{ (states('sensor.solax1_battery_soc') | float(0)) >
+                (states('input_number.soc_backup') | float(0)
+                + (5.0 if (states('binary_sensor.solax1_soc_backup') == 'off') else 0)
+                - (0.0 if (states('binary_sensor.solax1_soc_backup') == 'on') else 0))
+            }}
+
+        solax1_soc_grid_backup:
+          friendly_name: "Solax1 SOC Grid Backup"
+          value_template: >
+            {{ (states('sensor.solax1_battery_soc') | float(0)) >=
+                (states('input_number.soc_backup') | float(0)
+                + (0.0 if (states('binary_sensor.solax1_soc_grid_backup') == 'off') else 0)
+                - (2.0 if (states('binary_sensor.solax1_soc_grid_backup') == 'on') else 0))
+            }}
+
+        solax1_soc_min:
+          friendly_name: "Solax1 SOC Min"
+          value_template: >
+            {{ (states('sensor.solax1_battery_soc') | float(0)) >
+                (states('input_number.soc_min') | float(0)
+                + (3.0 if (states('binary_sensor.solax1_soc_min') == 'off') else 0)
+                - (0.0 if (states('binary_sensor.solax1_soc_min') == 'on') else 0))
+            }}
+
+        solax1_soc_grid_min:
+          friendly_name: "Solax1 SOC Grid Min"
+          value_template: >
+            {{ (states('sensor.solax1_battery_soc') | float(0)) >=
+                (states('input_number.soc_grid_min') | float(0)
+                + (0.0 if (states('binary_sensor.solax1_soc_grid_min') == 'off') else 0)
+                - (2.0 if (states('binary_sensor.solax1_soc_grid_min') == 'on') else 0))
+            }}
+
+  #---------------------------------------------------------------
+
+  sensor:
+    - platform: template
+      sensors:
+        solax1_pv1_voltage:
+          friendly_name: "Solax1 PV1 Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[0] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_pv2_voltage:
+          friendly_name: "Solax1 PV2 Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[1] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_pv1_current:
+          friendly_name: "Solax1 PV1 Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[2] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_pv2_current:
+          friendly_name: "Solax1 PV2 Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[3] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_inverter_radiator_temperature:
+          friendly_name: "Solax1 Inverter Radiator Temperature"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[5] | int(0) }}"
+          unit_of_measurement: °C
+          device_class: temperature
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_inverter_state_value:
+          friendly_name: "Solax1 Inverter State Value"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[6] | int(0) }}"
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_pv1_power:
+          friendly_name: "Solax1 PV1 Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[7] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_pv2_power:
+          friendly_name: "Solax1 PV2 Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[8] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        # Ignore 9-16
+
+        solax1_battery_voltage:
+          friendly_name: "Solax1 Battery Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[17] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_battery_current:
+          friendly_name: "Solax1 Battery Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[18] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_battery_power:
+          friendly_name: "Solax1 Battery Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_1').split(',')[19] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_1') not in ['unknown', 'unavailable', 'none'] }}
+
+        #---------------------------------------------------------------
+
+        solax1_l1_voltage:
+          friendly_name: "Solax1 L1 Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[0] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l1_current:
+          friendly_name: "Solax1 L1 Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[1] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l1_power:
+          friendly_name: "Solax1 L1 Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[2] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l1_frequency:
+          friendly_name: "Solax1 L1 Frequency"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[3] | int(0) / 100 }}"
+          unit_of_measurement: Hz
+          device_class: frequency
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l2_voltage:
+          friendly_name: "Solax1 L2 Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[4] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l2_current:
+          friendly_name: "Solax1 L2 Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[5] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l2_power:
+          friendly_name: "Solax1 L2 Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[6] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l2_frequency:
+          friendly_name: "Solax1 L2 Frequency"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[7] | int(0) / 100 }}"
+          unit_of_measurement: Hz
+          device_class: frequency
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l3_voltage:
+          friendly_name: "Solax1 L3 Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[8] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l3_current:
+          friendly_name: "Solax1 L3 Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[9] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l3_power:
+          friendly_name: "Solax1 L3 Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[10] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l3_frequency:
+          friendly_name: "Solax1 L3 Frequency"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[11] | int(0) / 100 }}"
+          unit_of_measurement: Hz
+          device_class: frequency
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l1_eps_voltage:
+          friendly_name: "Solax1 L1 EPS Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[12] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l1_eps_current:
+          friendly_name: "Solax1 L1 EPS Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[13] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l1_eps_power:
+          friendly_name: "Solax1 L1 EPS Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[14] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        # Ignore value 15
+
+        solax1_l2_eps_voltage:
+          friendly_name: "Solax1 L2 EPS Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[16] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l2_eps_current:
+          friendly_name: "Solax1 L2 EPS Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[17] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l2_eps_power:
+          friendly_name: "Solax1 L2 EPS Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[18] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        # Ignore value 19
+
+        solax1_l3_eps_voltage:
+          friendly_name: "Solax1 L3 EPS Voltage"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[20] | int(0) / 10 }}"
+          unit_of_measurement: V
+          device_class: voltage
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l3_eps_current:
+          friendly_name: "Solax1 L3 EPS Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[21] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l3_eps_power:
+          friendly_name: "Solax1 L3 EPS Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_2').split(',')[22] | int(0) }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_2') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l1_feed_in_power:
+          friendly_name: "Solax1 L1 Feed In Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_3').split(',')[0] }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_3') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l2_feed_in_power:
+          friendly_name: "Solax1 L2 Feed In Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_3').split(',')[2] }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_3') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_l3_feed_in_power:
+          friendly_name: "Solax1 L3 Feed In Power"
+          value_template: "{{ states('sensor.solax1_multiple_registers_3').split(',')[4] }}"
+          unit_of_measurement: W
+          device_class: power
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_3') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_inverter_mode_value:
+          friendly_name: "Solax1 Inverter Mode Value"
+          value_template: "{{ states('sensor.solax1_multiple_registers_4').split(',')[0] | int(0) }}"
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_4') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_inverter_manual_mode_value:
+          friendly_name: "Solax1 Inverter Manual Mode Value"
+          value_template: "{{ states('sensor.solax1_multiple_registers_4').split(',')[1] | int(0) }}"
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_4') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_max_charge_current:
+          friendly_name: "Solax1 Max Charge Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_4').split(',')[5] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_4') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_max_discharge_current:
+          friendly_name: "Solax1 Max Discharge Current"
+          value_template: "{{ states('sensor.solax1_multiple_registers_4').split(',')[6] | int(0) / 10 }}"
+          unit_of_measurement: A
+          device_class: current
+          availability_template: >
+            {{ states('sensor.solax1_multiple_registers_4') not in ['unknown', 'unavailable', 'none'] }}
+
+        solax1_grid_power:
+          friendly_name: "Solax1 Grid Power"
+          unit_of_measurement: "W"
+          value_template: "{{ states('sensor.solax1_l1_feed_in_power') | int(0) + states('sensor.solax1_l2_feed_in_power') | int(0) + states('sensor.solax1_l3_feed_in_power') | int(0) }}"
+
+        solax1_inverter_state:
+          friendly_name: "Solax1 Inverter State"
+          value_template: >-
+            {% if is_state('sensor.solax1_inverter_state_value', '0') %}
+              Waiting
+            {% elif is_state('sensor.solax1_inverter_state_value', '1') %}
+              Checking
+            {% elif is_state('sensor.solax1_inverter_state_value', '2') %}
+              Normal
+            {% elif is_state('sensor.solax1_inverter_state_value', '3') %}
+              Fault
+            {% elif is_state('sensor.solax1_inverter_state_value', '4') %}
+              Permanent Fault
+            {% elif is_state('sensor.solax1_inverter_state_value', '5') %}
+              Update
+            {% elif is_state('sensor.solax1_inverter_state_value', '6') %}
+              EPS Checking
+            {% elif is_state('sensor.solax1_inverter_state_value', '7') %}
+              EPS
+            {% elif is_state('sensor.solax1_inverter_state_value', '8') %}
+              Self Test
+            {% elif is_state('sensor.solax1_inverter_state_value', '9') %}
+              Idle
+            {% elif is_state('sensor.solax1_inverter_state_value', '10') %}
+              Standby
+            {% else %}
+              Unknown
+            {% endif %}
+
+        solax1_inverter_mode:
+          friendly_name: "Solax1 Inverter Mode"
+          value_template: >-
+            {% if is_state('sensor.solax1_inverter_mode_value', '0') %}
+              Self Use
+            {% elif is_state('sensor.solax1_inverter_mode_value', '1') %}
+              Feed In Priority
+            {% elif is_state('sensor.solax1_inverter_mode_value', '2') %}
+              Back Up
+            {% elif is_state('sensor.solax1_inverter_mode_value', '3') %}
+              Manual Mode
+            {% else %}
+              Unknown
+            {% endif %}
+
+        solax1_inverter_manual_mode:
+          friendly_name: "Solax1 Inverter Manual Mode"
+          value_template: >-
+            {% if is_state('sensor.solax1_inverter_manual_mode_value', '0') %}
+              Stop
+            {% elif is_state('sensor.solax1_inverter_manual_mode_value', '1') %}
+              Force Charge
+            {% elif is_state('sensor.solax1_inverter_manual_mode_value', '2') %}
+              Force Discharge
+            {% else %}
+              Unknown
+            {% endif %}
+
+        # solax1_battery_install_capacity:
+        #   friendly_name: "Solax1 Battery Install Capacity"
+        #   unit_of_measurement: "kWh"
+        #   value_template: "{{ states('input_number.solax1_battery_capacity') | float(0) }}"
+
+        solax1_ac_power:
+          friendly_name: "Solax1 AC Power"
+          value_template: "{{ states('sensor.solax1_l1_power') | int(0) + states('sensor.solax1_l2_power') | int(0) + states('sensor.solax1_l3_power') | int(0) }}"
+          unit_of_measurement: W
+          device_class: power

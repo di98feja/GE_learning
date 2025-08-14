@@ -1,0 +1,103 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+power_logic:
+  binary_sensor:
+    - platform: template
+      sensors:
+        # Charge Price
+        charge_price:
+          friendly_name: "Charge Price"
+          value_template: >
+            {{  states('binary_sensor.solax1_soc_max') == 'off'
+                and states('sensor.electricity_price_buy') != 'unavailable'
+                and states('sensor.electricity_price_buy') | float(100) <= states('sensor.electricity_price_limit_charge') | float(0)
+                and states('sensor.electricity_price_buy') | float(100) < states('sensor.electricity_price_limit_use') | float(0)
+                and ( states('binary_sensor.charge_on_next_occasion') == 'on'
+                or ( states('sensor.electricity_price_buy') | float(100) 
+                < states('input_number.low_price_limit_buy') | float(0) ))
+            }}
+
+        # Charge Min
+        charge_min:
+          friendly_name: "Charge Min"
+          value_template: >
+            {{ states('binary_sensor.solax1_soc_grid_min') == 'off'
+                and states('binary_sensor.export_from_battery') == 'off'
+                and states('sensor.power_tariff_status') != 'Peak'
+            }}
+
+        #-----------------------------------------------------------------------------------------------------------------------
+
+        # Charge Battery Sun
+        charge_battery_sun:
+          friendly_name: "Charge Battery Sun"
+          value_template: >
+            {{ 
+              (states('sensor.charge_limit_battery_sun') | float(0)) 
+              > (states('sensor.electricity_price_sell') | float(0))
+              and states('sun.sun') == 'above_horizon'
+            }}
+
+        #-----------------------------------------------------------------------------------------------------------------------
+
+        # Charge Battery Grid
+        charge_battery_grid:
+          friendly_name: "Charge Battery Grid"
+          value_template: >
+            {{
+              (states('binary_sensor.charge_price') == 'on' 
+                or states('binary_sensor.charge_min') == 'on' 
+                or states('input_boolean.charge_battery_override') == 'on')
+                and states('input_boolean.use_battery_override') != 'on'
+                and ((states('sensor.hourly_energy') | float(0) 
+                <= (states('input_number.allowed_hourly_off_peak_energy') | float(0))
+                    and states('sensor.power_tariff_status') == 'Off Peak')
+                        or (states('sensor.hourly_energy') | float(0) 
+                        <= states('input_number.allowed_hourly_peak_energy') | float(0)
+                    and states('sensor.power_tariff_status') == 'Peak'))
+                and ((states('sensor.energy_current_hour') | float(0) 
+                + states('sensor.energy_current_hour_2') | float(0)) 
+                <= states('input_number.average_charge_power') | float(0))  
+            }}
+
+        #-----------------------------------------------------------------------------------------------------------------------
+        # Discharge Battery
+        discharge_battery:
+          friendly_name: "Discharge Battery"
+          value_template: >
+            {{ (states('sensor.electricity_price_buy') | float(0) 
+                >= states('sensor.electricity_price_limit_use') | float(0)
+                and states('sensor.electricity_price_limit_use') | float(0) 
+                >= states('sensor.electricity_price_limit_sell') | float(0)
+                and states('sensor.electricity_price_buy') != 'unavailable'
+                and states('binary_sensor.solax1_soc_backup') == 'on'
+                and states('input_boolean.charge_battery_override') != 'on'
+                and states('binary_sensor.ev_is_charging') != 'on'
+                and states('binary_sensor.flower_fcr_d_down') != 'on'
+                and states('input_boolean.fix_price_mode') != 'on')
+                or states('sensor.solax1_inverter_state') == 'EPS'
+                or states('binary_sensor.export_from_battery') == 'on'
+                or states('input_boolean.force_power') == 'on'
+                or (states('input_boolean.use_battery_override') == 'on'
+                and states('binary_sensor.solax1_soc_min') != 'off')
+            }}

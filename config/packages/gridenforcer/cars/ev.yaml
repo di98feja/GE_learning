@@ -1,0 +1,117 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+cars_ev:
+  binary_sensor:
+    - platform: template
+      sensors:
+        ev_charge_limit_reached:
+          friendly_name: "EV Charge Limit Reached"
+          value_template: >
+            {{ states('sensor.myenergi_zappi_1_plug_status') != 'EV Disconnected' and
+               states('sensor.ev_energy_to_charge') | float(0) <
+               states('sensor.myenergi_zappi_1_charge_added_session') | float(0)
+            }}
+
+  #***************************************************************************************************
+
+  input_number:
+    ev_battery_capacity:
+      name: EV Battery Capacity
+      min: 0
+      max: 150
+      step: 1
+      unit_of_measurement: "kWh"
+      icon: mdi:car-electric
+      mode: slider
+
+    ev_start_soc:
+      name: EV Start SOC
+      min: 0
+      max: 100
+      step: 1
+      unit_of_measurement: "%"
+      icon: mdi:car-electric
+      mode: slider
+
+    ev_stop_soc:
+      name: EV Stop SOC
+      min: 0
+      max: 100
+      step: 1
+      unit_of_measurement: "%"
+      icon: mdi:car-electric
+      mode: slider
+
+  #***************************************************************************************************
+
+  input_boolean:
+    ev_allways_night_charge:
+      name: EV Allways Night Charge
+      icon: mdi:transmission-tower
+
+  #***************************************************************************************************
+
+  sensor:
+    - platform: template
+      sensors:
+        ev_energy_to_charge_limit:
+          friendly_name: "EV Energy to Charge Limit"
+          icon_template: mdi:battery-arrow-up
+          value_template: >
+            {% if states('input_boolean.ev_charge_low_price') == 'on' and
+                  states('sensor.myenergi_zappi_1_plug_status') != 'EV Disconnected'%}
+              {% if states('input_boolean.ev_charge_forced') != 'on' %}
+                {% if states('sensor.myenergi_zappi_1_plug_status') != 'EV Disconnected' %}
+                  {% set remaining_energy = states('sensor.ev_energy_to_charge') | float(0) -
+                                            states('sensor.myenergi_zappi_1_charge_added_session') | float(0) %}
+                  {{ remaining_energy if remaining_energy >= 0 else 0 }}
+                {% elif states('sensor.myenergi_zappi_2_plug_status') != 'EV Disconnected' %}
+                  {% set remaining_energy = states('sensor.ev_energy_to_charge') | float(0) 
+                  - states('sensor.myenergi_zappi_2_charge_added_session') | float(0) %}
+                  {{ remaining_energy if remaining_energy >= 0 else 0 }}
+                {% else %}
+                  0
+                {% endif %}
+              {% else %}
+                0
+              {% endif %}
+            {% else %}
+              0
+            {% endif %}
+          unit_of_measurement: "kWh"
+
+    #***************************************************************************************************
+
+    - platform: template
+      sensors:
+        ev_energy_to_charge:
+          friendly_name: "EV Energy to Charge"
+          icon_template: mdi:car-electric
+          unit_of_measurement: "kWh"
+          value_template: >
+            {% set battery_capacity = states('input_number.ev_battery_capacity') | float %}
+            {% set start_soc = states('input_number.ev_start_soc') | float %}
+            {% set stop_soc = states('input_number.ev_stop_soc') | float %}
+
+            {% set energy_to_charge = ((stop_soc - start_soc) / 100) * battery_capacity %}
+            {{ energy_to_charge | round(0) }}

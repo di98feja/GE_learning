@@ -1,0 +1,372 @@
+energy_calculations:
+  #Räknar ut energin för active import. Återställs ej.
+  sensor:
+    - platform: integration
+      source: sensor.momentary_active_import
+      name: energy_consumption_grid
+      unit_prefix: k
+      round: 2
+      max_sub_interval:
+        seconds: 10
+  # Energimätare
+  utility_meter:
+    daily_energy:
+      name: Tariff meter
+      #Tariff mode
+      source: sensor.energy_consumption_grid
+      cycle: daily
+      tariffs:
+        - Peak
+        - Off Peak
+    hourly_energy:
+      source: sensor.energy_consumption_grid
+      cycle: hourly
+      #cron: "0 * * * *"
+    hourly_peak_energy:
+      source: sensor.energy_consumption_grid
+      cycle: hourly
+      tariffs:
+        - Peak
+    hourly_offpeak_energy:
+      source: sensor.energy_consumption_grid
+      cycle: hourly
+      tariffs:
+        - Off Peak
+
+  input_number:
+    # Egen input för att ställa maximal tillåten energi during Peak hours
+    allowed_hourly_peak_energy:
+      name: Allowed Hourly Peak Energy
+      min: 0
+      max: 25
+      step: 0.1
+      unit_of_measurement: kWh
+      icon: mdi:gauge
+      mode: box
+    # Egen input för att ställa maximal tillåten energi during Off Peak hours
+    allowed_hourly_off_peak_energy:
+      name: Allowed Hourly Off Peak Energy
+      min: 0
+      max: 25
+      step: 0.1
+      unit_of_measurement: kWh
+      icon: mdi:gauge
+      mode: box
+    #Input för Peak / Off Peak TOP 3
+    peak_max_1:
+      name: Peak Max 1
+      min: 0
+      max: 100
+      step: 0.1
+      unit_of_measurement: kWh
+    peak_max_2:
+      name: Peak Max2
+      min: 0
+      max: 100
+      step: 0.1
+      unit_of_measurement: kWh
+    peak_max_3:
+      name: Peak max 3
+      min: 0
+      max: 100
+      step: 0.1
+      unit_of_measurement: kWh
+    off_peak_max_1:
+      name: Off Peak max 1
+      min: 0
+      max: 100
+      step: 0.1
+      unit_of_measurement: kWh
+    off_peak_max_2:
+      name: Off Peak max 2
+      min: 0
+      max: 100
+      step: 0.1
+      unit_of_measurement: kWh
+    off_peak_max_3:
+      name: Off Peak max 3
+      min: 0
+      max: 100
+      step: 0.1
+      unit_of_measurement: kWh
+  #Inputs för att i HA kunna ställa Peak /off-peak tider
+  input_datetime:
+    peak_tariff_time:
+      name: Peak Tariff Start
+      has_date: false
+      has_time: true
+      initial: "06:00"
+    off_peak_tariff_time:
+      name: Peak Tariff Stop
+      has_date: false
+      has_time: true
+      initial: "22:00"
+  # Automation för att automatiskt skifta tariff
+  # TODO: För att få sensorn att uppdatera så fort man ändrar peak_tariff_time eller
+  #       off_peak_tariff_time, kanske ändra enligt:
+  #       - Peak: sensor.time >= peak_tariff_time and sensor.time < off_peak_tariff_time
+  #       - Off Peak: sensor.time >= off_peak_tariff_time or sensor.time < peak_tariff_time
+  automation:
+    - alias: Set Electricity Tariff
+      id: set_electricity_tariff
+      trigger:
+        - platform: template
+          value_template: >
+            {{ states('sensor.time') >= states('input_datetime.peak_tariff_time')[0:5] and
+               states('sensor.time') < states('input_datetime.off_peak_tariff_time')[0:5] }}
+          variables:
+            tariff: "Peak"
+        - platform: template
+          value_template: >
+            {{ states('sensor.time') >= states('input_datetime.off_peak_tariff_time')[0:5] or
+               states('sensor.time') < states('input_datetime.peak_tariff_time')[0:5] }}
+          variables:
+            tariff: "Off Peak"
+      action:
+        - service: select.select_option
+          target:
+            entity_id: select.daily_energy
+          data:
+            option: "{{ tariff }}"
+    #Automation som startar "selfuse" efter det att energimängden uppnått inställt värde, reset på heltimme (minutes 00)
+    #Energy Tariff Selfuse Override
+    #Reduce hourly peak energy
+    - alias: Peak Shaving
+      id: peak_shaving
+      description: Toggle the discharge override based on energy usage and time.
+      mode: single
+      triggers:
+        - trigger: state
+          entity_id: sensor.hourly_energy
+        - trigger: state
+          entity_id: input_number.allowed_hourly_peak_energy
+        - trigger: state
+          entity_id: sensor.power_tariff_status
+        - trigger: time_pattern
+          minutes: 0
+      conditions:
+        - condition: state
+          entity_id: sensor.power_tariff_status
+          state: Peak
+      actions:
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: >
+                    {{ states('sensor.hourly_energy') | float(0) >
+                        states('input_number.allowed_hourly_peak_energy') | float(0) }}
+              sequence:
+                - target:
+                    entity_id: input_boolean.use_battery_override
+                  action: input_boolean.turn_on
+            - conditions:
+                - or:
+                    - condition: template
+                      value_template: "{{ now().minute == 00 }}"
+                    - condition: template
+                      value_template: >
+                        {{ states('sensor.hourly_energy') | float(0) <=
+                            states('input_number.allowed_hourly_peak_energy') | float(0) }}
+              sequence:
+                - target:
+                    entity_id: input_boolean.use_battery_override
+                  action: input_boolean.turn_off
+
+    #Automation som startar "selfuse" efter det att energimängden uppnått inställt värde, reset på heltimme (minutes 00)
+    #Energy Tariff Selfuse Override
+    #Reduce hourly off peak energy
+    - alias: Off Peak Shaving
+      id: off_peak_shaving
+      description: Toggle the discharge override based on energy usage and time.
+      mode: single
+      triggers:
+        - trigger: state
+          entity_id: sensor.hourly_energy
+        - trigger: state
+          entity_id: input_number.allowed_hourly_off_peak_energy
+        - trigger: state
+          entity_id: sensor.power_tariff_status
+        - trigger: time_pattern
+          minutes: 0
+      conditions:
+        - condition: state
+          entity_id: sensor.power_tariff_status
+          state: Off Peak
+      actions:
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: >
+                    {{ states('sensor.hourly_energy') | float(0) >
+                        states('input_number.allowed_hourly_off_peak_energy') | float(0) }}
+              sequence:
+                - target:
+                    entity_id: input_boolean.use_battery_override
+                  action: input_boolean.turn_on
+            - conditions:
+                - or:
+                    - condition: template
+                      value_template: "{{ now().minute == 00 }}"
+                    - condition: template
+                      value_template: >
+                        {{ states('sensor.hourly_energy') | float(0) <=
+                            states('input_number.allowed_hourly_off_peak_energy') | float(0) }}
+              sequence:
+                - target:
+                    entity_id: input_boolean.use_battery_override
+                  action: input_boolean.turn_off
+
+    #Månadens Peak top 3
+    - alias: Peak Top 3
+      description: Track the top 3 peak hours
+      triggers:
+        - minutes: "59"
+          seconds: "59"
+          trigger: time_pattern
+      conditions:
+        - condition: or
+          conditions:
+            - condition: template
+              value_template: |-
+                {{ states('select.daily_energy') == 'Peak' and
+                  states('sensor.hourly_energy') | float(0) > states('input_number.peak_max_3') | float(0) }}
+            - condition: template
+              value_template: "{{ now().day == 1 and now().hour == 0 and now().minute == 0}}"
+      actions:
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ now().day == 1 and now().hour == 0 and now().minute == 0}}"
+              sequence:
+                - data:
+                    entity_id: input_number.peak_max_3
+                    value: 0
+                  action: input_number.set_value
+                - data:
+                    entity_id: input_number.peak_max_2
+                    value: 0
+                  action: input_number.set_value
+                - data:
+                    entity_id: input_number.peak_max_1
+                    value: 0
+                  action: input_number.set_value
+          default:
+            - data:
+                entity_id: input_number.peak_max_3
+                value: |-
+                  {{ ([states('sensor.hourly_energy') | float(0),
+                      states('input_number.peak_max_3') | float(0),
+                      states('input_number.peak_max_2') | float(0),
+                      states('input_number.peak_max_1') | float(0)]
+                      | sort(reverse=True))[2] }}
+              action: input_number.set_value
+            - data:
+                entity_id: input_number.peak_max_2
+                value: |-
+                  {{ ([states('sensor.hourly_energy') | float(0),
+                      states('input_number.peak_max_3') | float(0),
+                      states('input_number.peak_max_2') | float(0),
+                      states('input_number.peak_max_1') | float(0)]
+                      | sort(reverse=True))[1] }}
+              action: input_number.set_value
+            - data:
+                entity_id: input_number.peak_max_1
+                value: |-
+                  {{ ([states('sensor.hourly_energy') | float(0),
+                      states('input_number.peak_max_3') | float(0),
+                      states('input_number.peak_max_2') | float(0),
+                      states('input_number.peak_max_1') | float(0)]
+                      | sort(reverse=True))[0] }}
+              action: input_number.set_value
+    - alias: Off Peak top 3
+      description: Track the top 3 off peak hours
+      triggers:
+        - minutes: "59"
+          seconds: "59"
+          trigger: time_pattern
+      conditions:
+        - condition: or
+          conditions:
+            - condition: template
+              value_template: |-
+                {{ states('select.daily_energy') == 'Off Peak' and
+                  states('sensor.hourly_energy') | float(0) > states('input_number.off_peak_max_3') | float(0) }}
+            - condition: template
+              value_template: "{{ now().day == 1 and now().hour == 0 and now().minute == 0}}"
+      actions:
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ now().day == 1 and now().hour == 0 and now().minute == 0}}"
+              sequence:
+                - data:
+                    entity_id: input_number.off_peak_max_3
+                    value: 0
+                  action: input_number.set_value
+                - data:
+                    entity_id: input_number.off_peak_max_2
+                    value: 0
+                  action: input_number.set_value
+                - data:
+                    entity_id: input_number.off_peak_max_1
+                    value: 0
+                  action: input_number.set_value
+          default:
+            - data:
+                entity_id: input_number.off_peak_max_3
+                value: |-
+                  {{ ([states('sensor.hourly_energy') | float(0),
+                      states('input_number.off_peak_max_3') | float(0),
+                      states('input_number.off_peak_max_2') | float(0),
+                      states('input_number.off_peak_max_1') | float(0)]
+                      | sort(reverse=True))[2] }}
+              action: input_number.set_value
+            - data:
+                entity_id: input_number.off_peak_max_2
+                value: |-
+                  {{ ([states('sensor.hourly_energy') | float(0),
+                      states('input_number.off_peak_max_3') | float(0),
+                      states('input_number.off_peak_max_2') | float(0),
+                      states('input_number.off_peak_max_1') | float(0)]
+                      | sort(reverse=True))[1] }}
+              action: input_number.set_value
+            - data:
+                entity_id: input_number.off_peak_max_1
+                value: |-
+                  {{ ([states('sensor.hourly_energy') | float(0),
+                      states('input_number.off_peak_max_3') | float(0),
+                      states('input_number.off_peak_max_2') | float(0),
+                      states('input_number.off_peak_max_1') | float(0)]
+                      | sort(reverse=True))[0] }}
+              action: input_number.set_value
+      mode: single
+
+  template:
+    - sensor:
+        - name: "Remaining Hourly Peak Energy"
+          unique_id: remaining_hourly_peak_energy
+          unit_of_measurement: "kWh"
+          state: >
+            {{ states('input_number.allowed_hourly_peak_energy') | float(0) - states('sensor.hourly_energy') | float(0) | round(2) }}
+
+        - name: "Remaining Hourly Off Peak Energy"
+          unique_id: remaining_hourly_off_peak_energy
+          unit_of_measurement: "kWh"
+          state: >
+            {{ states('input_number.allowed_hourly_off_peak_energy') | float(0) - states('sensor.hourly_energy') | float(0) | round(2) }}
+
+        - name: "Power Tariff Status"
+          unique_id: power_tariff_status
+          state: >
+            {% if states('input_select.energy_tariff') == 'Enabled' %}
+              {{ states('select.daily_energy') }}
+            {% else %}
+              {{ states('input_select.energy_tariff') }}
+            {% endif %}
+
+  input_select:
+    energy_tariff:
+      name: Use Power Tariff
+      options:
+        - Enabled
+        - Disabled

@@ -1,0 +1,133 @@
+socsensor:
+  template:
+    - trigger:
+        - platform: time_pattern
+          seconds: "/5"
+      sensor:
+        - name: Quick SOC
+          unique_id: quick_soc
+          state: >
+            {% set sensor_value = states('sensor.solax1_battery_soc') | float(0) %}
+            {{ 0.0001 * (this.state | float(0) == sensor_value) + sensor_value }}
+          state_class: measurement
+          unit_of_measurement: "%"
+  sensor:
+    - platform: derivative
+      source: sensor.quick_soc
+      name: Derivate of quick soc
+      round: 3
+      unit_time: h
+      time_window: "00:10:00"
+
+socinput:
+  input_boolean:
+    runsoc:
+      name: Run SOC
+      initial: off
+    soc_fault_detected:
+      name: SOC fault detected
+  counter:
+    soc_faults_detected_counter:
+      name: SOC faults detected Counter
+      step: 1
+
+socautomations:
+  automation:
+    #Del 1 här detecterar vi problemet med SOC och sätter input_boolean.soc_fault_detected hög
+    - alias: Detect SOC Fault
+      id: detect_soc_fault
+      initial_state: false
+      description: ""
+      trigger:
+        - platform: numeric_state
+          entity_id:
+            - sensor.derivate_of_quick_soc
+          above: 20
+        - platform: state
+          entity_id: input_boolean.runsoc
+          to: "on"
+      condition:
+        - condition: template
+          value_template: >-
+            {{ states('sensor.solax1_battery_current') | float >= 0 and
+            states('sensor.solax1_battery_current') | float <= 0.5 }}
+      action:
+        - service: input_number.set_value
+          data:
+            value: "{{ (states('sensor.solax1_battery_soc') | float) + 10 }}"
+          target:
+            entity_id: input_number.soc_max
+        - service: input_number.set_value
+          data_template:
+            value: "{{ (states('sensor.solax1_battery_soc') | float) + 5 }}"
+          target:
+            entity_id: input_number.soc_backup
+        - service: homeassistant.turn_on
+          target:
+            entity_id: input_boolean.soc_fault_detected
+        - service: counter.increment
+          target:
+            entity_id: counter.soc_faults_detected_counter
+
+    # Del 2. Här kommmer laddningen och urladdningen och återställande av input_boolean.soc_fault_detected
+    - alias: SOC Charge uncharge
+      id: soc_charge_uncharge
+      initial_state: false
+      description: ""
+      trigger:
+        - platform: time
+          at: "01:00:00"
+      condition:
+        - condition: state
+          entity_id: input_boolean.soc_fault_detected
+          state: "on"
+      action:
+        - service: input_number.set_value
+          metadata: {}
+          data:
+            value: 100
+          target:
+            entity_id: input_number.soc_max
+        - service: input_number.set_value
+          metadata: {}
+          data:
+            value: 100
+          target:
+            entity_id: input_number.soc_backup
+        - wait_template: >
+            {{ states('sensor.solax1_battery_current') | float < 0.1 and
+              states('sensor.solax1_battery_soc') | float > 99 }}
+        - service: input_number.set_value
+          metadata: {}
+          data:
+            value: 70
+          target:
+            entity_id: input_number.soc_backup
+        - service: input_boolean.toggle
+          metadata: {}
+          data: {}
+          target:
+            entity_id: input_boolean.force_power
+        - wait_template: "{{ states('sensor.solax1_battery_soc') | float <= 70 }}"
+        - service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.force_power
+          data: {}
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.soc_backup
+          data:
+            value: 40
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.soc_max
+          data:
+            value: 70
+        - service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.runsoc
+          data: {}
+        - service: homeassistant.turn_off
+          target:
+            entity_id: input_boolean.soc_fault_detected
+      mode: single

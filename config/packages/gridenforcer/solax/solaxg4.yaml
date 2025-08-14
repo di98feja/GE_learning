@@ -1,0 +1,486 @@
+# MIT License
+#
+# Copyright (c) 2021-2022 Reik Steinert
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+solax_solaxg4:
+  #------------------------------------------------------------------------
+
+  automation:
+    - id: solax_unlock
+      alias: Solax Unlock
+      mode: single
+      trigger:
+        - platform: state
+          entity_id: sensor.solax1_unlocked
+          to: "0"
+      action:
+        - service: script.turn_on
+          entity_id: script.configure_inverter_solax1
+
+    #------------------------------------------------------------------------
+
+    - id: solax_set_export_limit
+      alias: Solax Set Export Limit
+      mode: restart
+      triggers:
+        - trigger: state
+          entity_id:
+            - input_number.export_limit
+            - binary_sensor.flower_fcr_d_down
+            - sensor.electricity_price_sell
+            - input_number.low_price_limit_sell
+      variables:
+        desired_value: >
+          {% if states('binary_sensor.flower_fcr_d_down') == 'on'
+                or (states('sensor.electricity_price_sell') | float(100) 
+                  < states('input_number.low_price_limit_sell') | float(100)) %}
+            0
+          {% else %}
+            {{ states('input_number.export_limit') | int(0) }}
+          {% endif %}
+        current_value: >
+          {{ states('sensor.solax1_export_limit') | int(0) }}
+      condition:
+        - condition: template
+          value_template: "{{ desired_value != current_value }}"
+      action:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 66
+            value: >
+              {{ (desired_value | multiply(0.1)) | int(0) }}
+
+    #------------------------------------------------------------------------
+
+    - id: solax_auto_switch_inverter_to_feed_in_priority
+      alias: Solax Auto Switch Inverter to Feed In Priority
+      mode: single
+      max_exceeded: silent
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+      condition:
+        "{{ (as_timestamp(now()) - as_timestamp(states('sensor.last_restart'))) | int(0) > 300
+        and states('binary_sensor.feed_in_priority') == 'on' and states('sensor.solax1_inverter_mode') != 'Feed In Priority' }}"
+      action:
+        - service: script.turn_on
+          data: {}
+          target:
+            entity_id: script.set_inverter_to_feed_in
+          # Temporarilly turn off automation in order to let it finish before it is called again
+        - wait_template: "{{ states('sensor.solax1_inverter_mode') == 'Feed In Priority' }}"
+          timeout: "00:00:10"
+
+    #------------------------------------------------------------------------
+
+    - id: solax_auto_switch_inverter_to_manual_mode_charge
+      alias: Solax Auto Switch Inverter to Manual Mode Charge
+      mode: single
+      max_exceeded: silent
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+      condition:
+        "{{ (as_timestamp(now()) - as_timestamp(states('sensor.last_restart'))) | int(0) > 300 and
+            states('binary_sensor.manual_charge') == 'on' and
+            (states('sensor.solax1_inverter_mode') != 'Manual Mode' or
+             states('sensor.solax1_inverter_manual_mode') != 'Force Charge') }}"
+      action:
+        - service: script.turn_on
+          data: {}
+          target:
+            entity_id: script.set_inverter_manual_force_charge
+        - delay: "00:00:01"
+        - service: script.turn_on
+          data: {}
+          target:
+            entity_id: script.set_inverter_to_manual_mode
+        - wait_template: "{{ states('sensor.solax1_inverter_mode') == 'Manual Mode' and
+                             states('sensor.solax1_inverter_manual_mode') == 'Force Charge' }}"
+          timeout: "00:00:10"
+          continue_on_timeout: false
+
+        - condition: "{{ states('binary_sensor.flower_fcr_d_down') == 'on' }}"
+        - service: counter.increment
+          target:
+            entity_id: counter.fcr_d_down_counter
+
+    #------------------------------------------------------------------------
+
+    - id: solax_auto_switch_inverter_to_manual_mode_discharge
+      alias: Solax Auto Switch Inverter to Manual Mode Discharge
+      mode: single
+      max_exceeded: silent
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+      condition:
+        "{{ (as_timestamp(now()) - as_timestamp(states('sensor.last_restart'))) | int(0) > 300
+        and states('binary_sensor.manual_discharge') == 'on' and (states('sensor.solax1_inverter_mode') != 'Manual Mode' or states('sensor.solax1_inverter_manual_mode') != 'Force Discharge') }}"
+      action:
+        - service: script.turn_on
+          data: {}
+          target:
+            entity_id: script.set_inverter_manual_force_discharge
+        - delay: "00:00:01"
+        - service: script.turn_on
+          data: {}
+          target:
+            entity_id: script.set_inverter_to_manual_mode
+        - wait_template: "{{ states('sensor.solax1_inverter_mode') == 'Manual Mode' and states('sensor.solax1_inverter_manual_mode') == 'Force Discharge' }}"
+          timeout: "00:00:10"
+          continue_on_timeout: false
+
+        - condition: "{{ states('binary_sensor.flower_fcr_d_up') == 'on' }}"
+        - service: counter.increment
+          target:
+            entity_id: counter.fcr_d_up_counter
+
+    #------------------------------------------------------------------------
+
+    - id: solax_auto_switch_inverter_to_self_use
+      alias: Solax Auto Switch Inverter to Self Use
+      mode: single
+      max_exceeded: silent
+      trigger:
+        - platform: time_pattern
+          seconds: "/1"
+      condition:
+        "{{ (as_timestamp(now()) - as_timestamp(states('sensor.last_restart'))) | int(0) > 300 and
+            states('binary_sensor.self_use') == 'on' and
+            states('sensor.solax1_inverter_mode') != 'Self Use' }}"
+      action:
+        - service: script.turn_on
+          data: {}
+          target:
+            entity_id: script.set_inverter_to_self_use
+        - wait_template: "{{ states('sensor.solax1_inverter_mode') == 'Self Use' }}"
+          timeout: "00:00:10"
+
+    #------------------------------------------------------------------------
+
+    - id: money_mode_on
+      alias: Money Mode On
+      mode: single
+      trigger:
+        - platform: template
+          value_template: >
+            {{ states('sensor.electricity_price_sell') | float(0) != 'Unknown' and
+               states('sensor.electricity_price_sell') | float(0) >=
+               states('sensor.electricity_price_limit_sell') | float(0) }}
+      condition: "{{ states('input_number.hours_to_sell') | int(0) > 0
+        and states('binary_sensor.solax1_soc_backup') == 'on'
+        and states('binary_sensor.sell_on_next_occasion') == 'on'
+        and states('sensor.solax1_inverter_state') != 'EPS'
+        }}"
+      action:
+        - service: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.force_power
+
+    - id: money_mode_off
+      alias: Money Mode Off
+      mode: single
+      trigger:
+        - platform: template
+          value_template: >
+            {{ states('sensor.electricity_price_sell') | float(0) <
+               states('sensor.electricity_price_limit_sell') | float(0) }}
+      action:
+        - service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.force_power
+
+    - id: switch_off_overrides_soc_backup_off
+      alias: Switch Off Overrides SOC Backup Off
+      mode: single
+      triggers:
+        - trigger: state
+          entity_id: binary_sensor.solax1_soc_backup
+          to: "off"
+      actions:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.force_power
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.use_battery_override
+
+    - id: switch_off_overrides_soc_max_on
+      alias: Switch Off Overrides SOC Max On
+      mode: single
+      triggers:
+        - trigger: state
+          entity_id: binary_sensor.solax1_soc_max
+          to: "on"
+      actions:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.charge_battery_override
+
+    #------------------------------------------------------------------------
+
+  binary_sensor:
+    - platform: template
+      sensors:
+        feed_in_priority:
+          friendly_name: "Feed In Priority"
+          value_template: >
+            {{ states('sensor.solax1_inverter_state') != 'EPS'
+                and states('binary_sensor.charge_battery_grid') == 'off'
+                and states('binary_sensor.charge_battery_sun') == 'off'
+                and states('binary_sensor.flower_fcr_d_up') == 'off'
+                and states('binary_sensor.flower_fcr_d_down') == 'off'
+                and states('input_boolean.force_power') == 'off' }}
+
+        #------------------------------------------------------------------------
+
+        manual_charge:
+          friendly_name: "Manual Charge"
+          value_template: >
+            {{ states('sensor.solax1_inverter_state') != 'EPS' and
+               ( (states('binary_sensor.charge_battery_grid') == 'on') or
+                 states('binary_sensor.flower_fcr_d_down') == 'on') and
+               states('binary_sensor.flower_fcr_d_up') == 'off' and
+               states('input_boolean.force_power') == 'off' }}
+
+        #------------------------------------------------------------------------
+
+        manual_discharge:
+          friendly_name: "Manual Discharge"
+          value_template: >
+            {{ states('sensor.solax1_inverter_state') != 'EPS' and
+               ( states('binary_sensor.flower_fcr_d_up') == 'on' or
+                 (states('input_boolean.force_power') == 'on' and
+                  states('binary_sensor.solax1_soc_backup') == 'on')) and
+               states('binary_sensor.flower_fcr_d_down') == 'off' }}
+
+        #------------------------------------------------------------------------
+
+        self_use:
+          friendly_name: "Self Use"
+          delay_on:
+            seconds: 15
+          value_template: >
+            {{ states('binary_sensor.feed_in_priority') != 'on' and
+               states('binary_sensor.manual_charge') != 'on' and
+               states('binary_sensor.manual_discharge') != 'on' }}
+
+        #------------------------------------------------------------------------
+
+        export_from_battery:
+          friendly_name: "Export from Battery"
+          value_template: >
+            {{ states('binary_sensor.flower_fcr_d_up') == 'on' }}
+
+        #------------------------------------------------------------------------
+
+        import_to_battery:
+          friendly_name: "Import to Battery"
+          value_template: >
+            {{ states('binary_sensor.flower_fcr_d_down') == 'on' or
+               states('binary_sensor.charge_battery_sun') == 'on'
+            }}
+
+  #------------------------------------------------------------------------
+
+  input_number:
+    export_limit:
+      name: Export Limit (e.g. ~11 kW = 16 A main fuse)
+      min: 0
+      max: 44000 # corresponds to 63 A
+      step: 100
+      unit_of_measurement: "W"
+      icon: mdi:transmission-tower
+      mode: box
+
+    force_power:
+      name: Force Power (normally equal to Export Limit)
+      min: -44000
+      max: 44000 # 44 kW <=> 63 A
+      step: 100
+      unit_of_measurement: "W"
+      icon: mdi:wind-turbine
+      mode: box
+
+    max_grid_current:
+      name: Max Grid Current
+      min: 0
+      max: 63
+      step: 1
+      unit_of_measurement: "A"
+      icon: mdi:current-ac
+      mode: box
+
+    # battery_capacity:
+    #   name: Battery Capacity
+    #   min: 0
+    #   max: 100
+    #   step: 0.1
+    #   unit_of_measurement: "kWh"
+    #   icon: mdi:battery
+    #   mode: box
+
+  #------------------------------------------------------------------------
+
+  script:
+    set_inverter_to_self_use:
+      alias: Set Inverter to Self Use
+      sequence:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 31
+            value: 0
+
+    set_inverter_to_feed_in:
+      alias: Set Inverter to Feed In
+      sequence:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 31
+            value: 1
+
+    set_inverter_to_backup:
+      alias: Set Inverter to Backup
+      sequence:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 31
+            value: 2
+
+    set_inverter_to_manual_mode:
+      alias: Set Inverter to Manual Mode
+      sequence:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 31
+            value: 3
+
+    #------------------------------------------------------------------------
+
+    set_inverter_manual_mode_stop:
+      alias: Set Inverter Manual Mode Stop
+      sequence:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 32
+            value: 0
+
+    set_inverter_manual_force_charge:
+      alias: Set Inverter Manual Mode Force charge
+      sequence:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 32
+            value: 1
+
+    set_inverter_manual_force_discharge:
+      alias: Set Inverter Manual Force discharge
+      sequence:
+        - service: modbus.write_register
+          data:
+            hub: Solax1
+            slave: 1
+            address: 32
+            value: 2
+
+  #------------------------------------------------------------------------
+
+  sensor:
+    - platform: template
+      sensors:
+        solax_pv_power_total:
+          friendly_name: "PV Power Total"
+          value_template: "{{ states('sensor.solax1_pv1_power') | int(0) + states('sensor.solax1_pv2_power') | int(0) }}"
+          unit_of_measurement: "W"
+
+        solax_self_use_today:
+          friendly_name: "Self Use Today"
+          value_template: "{{ (states('sensor.solax1_solar_energy_today') | float(0) - states('sensor.solax1_feed_in_today') | float(0)) | round(1) }}"
+          unit_of_measurement: "kWh"
+
+        solax_total_energy_today:
+          friendly_name: "Total Energy Today"
+          value_template: "{{ (states('sensor.self_use_today') | float(0) + states('sensor.solax1_consumption_today') | float(0)) | round(1) }}"
+          unit_of_measurement: "kWh"
+
+        solax_self_use_total:
+          friendly_name: "Self Use Total"
+          value_template: "{{ (states('sensor.solax1_solar_energy_total') | float(0) - states('sensor.solax1_feed_in_total') | float(0)) | round(1) }}"
+          unit_of_measurement: "kWh"
+
+        solax_energy_total:
+          friendly_name: "Energy Total"
+          value_template: "{{ (states('sensor.solax_self_use_total') | float(0) + states('sensor.solax1_consumption_total') | float(0)) | round(1) }}"
+          unit_of_measurement: "kWh"
+
+        solax_solar_energy_today:
+          friendly_name: "Solar Energy Today"
+          value_template: "{{ (states('sensor.solax1_solar_energy_today') | float(0) ) | round(1) }}"
+          unit_of_measurement: "kWh"
+
+        solax_soc_total:
+          friendly_name: "SOC Total"
+          value_template: "{{ states('sensor.solax1_battery_soc') | float(0) }}"
+          unit_of_measurement: "%"
+
+        # solax_capacity_total:
+        #   friendly_name: "Capacity Total"
+        #   value_template: "{{ states('input_number.battery_capacity') | float(0) }}"
+        #   unit_of_measurement: "kWh"
+
+        #------------------------------------------------------------------------
+
+        house_energy_to_charge_limit:
+          friendly_name: "House Energy to Charge Limit"
+          icon_template: mdi:battery-arrow-up
+          value_template: >
+            {% if ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) > 0) %}
+                {{ ((states('input_number.soc_max') | int(0) - states('sensor.solax1_battery_soc') | int(0)) / 100 * states('sensor.solax1_battery_install_capacity') | float(0)) | round(1) }}
+            {% else %}
+                0
+            {% endif %}
+          unit_of_measurement: "kWh"
+
+        #------------------------------------------------------------------------
+
+        hours_to_charge:
+          friendly_name: "Hours To Charge"
+          icon_template: mdi:timer-sand-complete
+          value_template: >
+            {% set hours_to_charge = ((states('sensor.house_energy_to_charge_limit') | float(0) + states('sensor.ev_energy_to_charge_limit') | float(0)) / states('input_number.average_charge_power') | float(0) ) | round(0,'ceil') %}
+            {% set upper_limit = min([hours_to_charge, state_attr('input_number.hours_to_charge', 'max')]) | int(0) %}
+            {{ [upper_limit, state_attr('input_number.hours_to_charge', 'min')] | max }}
+          unit_of_measurement: "h"
