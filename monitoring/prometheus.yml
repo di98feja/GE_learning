@@ -1,0 +1,47 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Home Assistant metrics (if enabled)
+  - job_name: 'home-assistant'
+    static_configs:
+      - targets: ['home-assistant:8123']
+    metrics_path: '/api/prometheus'
+    bearer_token: 'your_long_lived_access_token_here'
+    scrape_interval: 60s
+
+  # Docker container metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+    scrape_interval: 30s
+
+  # System metrics (node_exporter if available)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # GridEnforcer specific metrics
+  - job_name: 'gridenforcer-integration'
+    static_configs:
+      - targets: ['home-assistant:8123']
+    metrics_path: '/api/states'
+    params:
+      entity_id: ['sensor.gridenforcer_*']
+    scrape_interval: 30s

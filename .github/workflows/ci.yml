@@ -47,11 +47,11 @@ jobs:
 
     - name: Type check with mypy
       run: |
-        mypy custom_components/gridenforcercontrol/
+        mypy custom_components/grid_enforcer/
 
     - name: Run tests
       run: |
-        pytest tests/ -v --cov=custom_components/gridenforcercontrol --cov-report=xml
+        pytest tests/ -v --cov=custom_components/grid_enforcer --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -79,7 +79,7 @@ jobs:
         import sys
         from pathlib import Path
         
-        manifest_path = Path('custom_components/gridenforcercontrol/manifest.json')
+        manifest_path = Path('custom_components/gridenforcer/manifest.json')
         if not manifest_path.exists():
             print('❌ manifest.json not found')
             sys.exit(1)
@@ -104,7 +104,7 @@ jobs:
         import sys
         from pathlib import Path
         
-        component_path = Path('custom_components/gridenforcercontrol')
+        component_path = Path('custom_components/gridenforcer')
         required_files = ['__init__.py', 'manifest.json']
         
         missing_files = []
@@ -134,7 +134,7 @@ jobs:
     - name: Create minimal config structure
       run: |
         mkdir -p config
-        mkdir -p custom_components/gridenforcercontrol
+        mkdir -p custom_components/grid_enforcer
         
         # Create minimal configuration.yaml
         cat > config/configuration.yaml << EOF
@@ -155,7 +155,7 @@ jobs:
           default: info
           
         # Grid Enforcer Integration
-        grid_enforcer:
+        gridenforcer:
           # Test configuration will be added during integration development
         EOF
 
