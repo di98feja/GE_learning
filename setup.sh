@@ -77,7 +77,7 @@ fi
 
 # Create basic project structure if needed
 echo "📁 Setting up project structure..."
-mkdir -p custom_components/grid_enforcer
+mkdir -p custom_components/gridenforcer
 mkdir -p tests
 mkdir -p config
 
