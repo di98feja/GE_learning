@@ -13,7 +13,7 @@ class TimeValue:
         self._end = end
         self._value = value
         self._sell_value = sell_value
-        self._mode = None
+        self._mode = "Standby"
 
     @property
     def start(self) -> datetime:
