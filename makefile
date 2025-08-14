@@ -97,22 +97,18 @@ test-integration:
 test-all: test-local test-performance test-integration
 	@echo "✅ All test suites completed"
 
-# Run linting checks using Docker
-lint:
-	docker run --rm -v $(PWD):/app -w /app python:3.11-alpine sh -c "\
-		pip install black isort mypy && \
-		black --check custom_components/ && \
-		isort --check-only custom_components/"
-
-# Format code using Docker
+# Format code locally (with venv)
 format:
-	docker run --rm -v $(PWD):/app -w /app python:3.11-alpine sh -c "\
-		pip install black isort && \
-		black custom_components/ && \
-		isort custom_components/"
+	@if [ ! -d "venv" ]; then echo "❌ Virtual environment not found. Run 'make setup' first."; exit 1; fi
+	. venv/bin/activate && isort --profile black custom_components/
+	. venv/bin/activate && black custom_components/
+	@echo "✅ Code formatted successfully"
 
-# Run all quality checks
-check: lint test
+# Run linting checks locally (with venv)
+lint:
+	@if [ ! -d "venv" ]; then echo "❌ Virtual environment not found. Run 'make setup' first."; exit 1; fi
+	. venv/bin/activate && isort --profile black --check-only custom_components/
+	. venv/bin/activate && black --check custom_components/
 
 # Alternative: Use dev-tools container for quality checks
 check-docker:

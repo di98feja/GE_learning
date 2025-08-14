@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from homeassistant.components.number import (NumberDeviceClass, NumberEntity,
-                                             NumberMode, RestoreNumber)
+from homeassistant.components.number import (
+    NumberDeviceClass,
+    NumberEntity,
+    NumberMode,
+    RestoreNumber,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo

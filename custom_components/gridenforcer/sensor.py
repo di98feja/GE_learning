@@ -12,10 +12,12 @@ from homeassistant.helpers.condition import SensorDeviceClass
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import (async_track_point_in_time,
-                                         async_track_state_change,
-                                         async_track_time_change,
-                                         async_track_time_interval)
+from homeassistant.helpers.event import (
+    async_track_point_in_time,
+    async_track_state_change,
+    async_track_time_change,
+    async_track_time_interval,
+)
 
 from .const import CONF_PRICE_SENSOR, DOMAIN
 from .invertermode import InverterMode

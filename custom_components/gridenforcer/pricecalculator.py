@@ -3,17 +3,29 @@ import math
 import zoneinfo
 from collections import namedtuple
 from datetime import datetime, timedelta
+
 # import numpy as np
 # from scipy.signal import find_peaks
 from typing import List, Tuple
 
 from dateutil import parser
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import (Event, EventStateChangedData, HomeAssistant,
-                                State, callback)
+from homeassistant.core import (
+    Event,
+    EventStateChangedData,
+    HomeAssistant,
+    State,
+    callback,
+)
 
-from .const import (CONF_BAT_COST, CONF_EXTRA_EXPORT, CONF_EXTRA_IMPORT,
-                    CONF_HOURS_SELFUSE, CONF_PRICE_SENSOR, CONF_VAT)
+from .const import (
+    CONF_BAT_COST,
+    CONF_EXTRA_EXPORT,
+    CONF_EXTRA_IMPORT,
+    CONF_HOURS_SELFUSE,
+    CONF_PRICE_SENSOR,
+    CONF_VAT,
+)
 from .invertermode import InverterMode
 from .timevalue import TimeValue
 
