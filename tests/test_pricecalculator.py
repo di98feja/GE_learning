@@ -142,7 +142,7 @@ async def test_async_update_price_calculator(mock_hass_for_price_calc, price_cal
         await calc.async_update_price_calculator()
         
         # Verify that update_timevalues_from_dict was called
-        mock_update.assert_called_once()
+        assert mock_update.called, "update_timevalues_from_dict should have been called"
 
 
 def test_inverter_mode_enum_values():

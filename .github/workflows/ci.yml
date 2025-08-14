@@ -45,11 +45,10 @@ jobs:
       run: |
         isort --check-only --diff custom_components/
 
-    - name: Type check with mypy
-      run: |
-        # Temporarily disabled - focus on functionality first
-        echo "⚠️  Type checking temporarily disabled"
-        # mypy custom_components/grid_enforcer/
+    # Type checking temporarily disabled
+    # - name: Type check with mypy
+    #   run: |
+    #     mypy custom_components/gridenforcer/
 
     - name: Run tests
       run: |
