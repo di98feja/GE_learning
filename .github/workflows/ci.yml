@@ -156,7 +156,7 @@ jobs:
           default: info
           
         # Grid Enforcer Integration
-        gridenforcer:
+        # gridenforcer:
           # Test configuration will be added during integration development
         EOF
 
