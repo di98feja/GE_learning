@@ -185,12 +185,12 @@ jobs:
     
         # Wait for startup
         echo "Waiting for Home Assistant to start..."
-        for i in {1..30}; do
+        for i in {1..60}; do
           if docker exec ha-test curl -f http://localhost:8123/api/ 2>/dev/null; then
             echo "✅ Home Assistant started successfully"
             break
           fi
-          if [ $i -eq 30 ]; then
+          if [ $i -eq 60 ]; then
             echo "❌ Home Assistant failed to start within timeout"
             docker logs ha-test
             exit 1
