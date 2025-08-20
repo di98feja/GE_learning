@@ -173,12 +173,16 @@ jobs:
 
     - name: Test Docker container startup
       run: |
+        # Create config directories with proper permissions
+        mkdir -p config/deps config/logs  
+        chmod -R 777 config/
+        
         # Start the container
         docker run -d --name ha-test \
           -v $(pwd)/config:/config \
           -v $(pwd)/custom_components:/config/custom_components \
           grid-enforcer-ha:test
-
+    
         # Wait for startup
         echo "Waiting for Home Assistant to start..."
         for i in {1..30}; do
