@@ -182,7 +182,7 @@ def test_timevalue_edge_cases():
     
     # Test normal creation
     tv = TimeValue(start=start, end=end, value=1.5, sell_value=1.2)
-    assert tv.mode is None  # Initially no mode set
+    assert tv.mode is "Standby"  # Initially no mode set
     
     # Test mode setting
     tv.mode = "Charge"

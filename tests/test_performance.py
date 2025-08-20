@@ -167,15 +167,19 @@ async def test_sensor_update_performance():
     hass.data = {"gridenforcer": {"price_hub": mock_price_hub}}
     
     config_entry = MagicMock()
-    
+    config_entry.entry_id = "test_entry_id"
     # Create sensor
+
     sensor = InverterModeSensor(
-        unique_id="test_sensor",
-        device_unique_id="test_device", 
-        entity_name="Test Sensor",
-        hass=hass,
-        config_entry=config_entry
+        "inverter_mode",           # unique_id parameter
+        config_entry.entry_id,     # device_unique_id parameter  
+        "Inverter Mode",           # entity_name parameter
+        hass,                      # hass parameter
+        config_entry               # config_entry parameter
     )
+    sensor.hass = hass
+    sensor.entity_id = "sensor.inverter_mode"
+    sensor.async_write_ha_state = MagicMock()  # Mock this method
     
     # Initialize sensor state
     sensor._state = InverterMode.STANDBY
@@ -205,6 +209,7 @@ def test_price_calculation_accuracy():
     hass = MagicMock()
     config = MagicMock()
     config.data = {
+        "price_sensor": "sensor.electricity_price",
         "extra_import": 0.15,
         "extra_export": 0.05,
         "vat": 25.0,

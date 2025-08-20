@@ -105,3 +105,17 @@ def mock_hass_for_price_calc():
     
     hass.states.get.side_effect = get_state_side_effect
     return hass
+
+@pytest.fixture
+def price_calculator_config():
+    """Mock config entry for PriceCalculator."""
+    config = MagicMock()
+    config.data = {
+        "price_sensor": "sensor.electricity_price",
+        "extra_import": 0.15,
+        "extra_export": 0.05,
+        "vat": 25.0,
+        "bat_cost": 0.02,
+        "hours_selfuse": 4.0
+    }
+    return config

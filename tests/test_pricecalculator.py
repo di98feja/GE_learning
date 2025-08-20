@@ -6,21 +6,6 @@ import zoneinfo
 
 
 @pytest.fixture
-def price_calculator_config():
-    """Mock config entry for PriceCalculator."""
-    config = MagicMock()
-    config.data = {
-        "price_sensor": "sensor.electricity_price",
-        "extra_import": 0.15,
-        "extra_export": 0.05,
-        "vat": 25.0,
-        "bat_cost": 0.02,
-        "hours_selfuse": 4.0
-    }
-    return config
-
-
-@pytest.fixture
 def mock_hass_for_price_calc():
     """Mock Home Assistant for PriceCalculator tests."""
     hass = MagicMock()
@@ -46,6 +31,20 @@ def mock_hass_for_price_calc():
             mock_soc_max = MagicMock()
             mock_soc_max.state = "80.0" 
             return mock_soc_max
+        elif entity_id == "sensor.electricity_price":
+            mock_price_sensor = MagicMock()
+            mock_price_sensor.state = "1.25"
+            mock_price_sensor.attributes = {
+                "raw_today": [
+                    {
+                        "start": "2024-01-01T00:00:00+01:00",
+                        "end": "2024-01-01T01:00:00+01:00",
+                        "value": 1.0
+                    }
+                ],
+                "raw_tomorrow": []
+            }
+            return mock_price_sensor
         return None
     
     hass.states.get.side_effect = get_state_side_effect
@@ -121,22 +120,15 @@ async def test_async_update_price_calculator(mock_hass_for_price_calc, price_cal
     
     calc = PriceCalculator(mock_hass_for_price_calc, price_calculator_config)
     
-    # Mock the price sensor state
+    # Mock the price sensor state - ADD THIS SECTION
     mock_price_state = MagicMock()
     mock_price_state.state = "1.25"
     mock_price_state.attributes = {
-        "raw_today": [
-            {
-                "start": "2024-01-01T00:00:00+01:00",
-                "end": "2024-01-01T01:00:00+01:00",
-                "value": 1.0
-            }
-        ],
+        "raw_today": [{"start": "2024-01-01T00:00:00+01:00", "end": "2024-01-01T01:00:00+01:00", "value": 1.0}],
         "raw_tomorrow": []
     }
-    
     mock_hass_for_price_calc.states.get.return_value = mock_price_state
-    
+        
     # Test that the method can be called without errors
     with patch.object(calc, 'update_timevalues_from_dict', new_callable=AsyncMock) as mock_update:
         await calc.async_update_price_calculator()
