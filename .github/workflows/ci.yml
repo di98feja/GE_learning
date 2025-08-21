@@ -269,7 +269,7 @@ jobs:
         EOF
 
         # Start services
-        docker compose up -d --profile mqtt
+        docker compose --profile mqtt up -d 
         
         # Wait for services to be ready
         sleep 10
