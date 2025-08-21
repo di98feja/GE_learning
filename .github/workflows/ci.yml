@@ -256,7 +256,7 @@ jobs:
 
     - name: Start test environment
       run: |
-        # Create test environment with docker-compose
+        # Create test environment with docker compose
         mkdir -p mosquitto/config mosquitto/data mosquitto/log
         
         # Create mosquitto config
@@ -269,7 +269,7 @@ jobs:
         EOF
 
         # Start services
-        docker-compose up -d --profile mqtt
+        docker compose up -d --profile mqtt
         
         # Wait for services to be ready
         sleep 10
@@ -290,7 +290,7 @@ jobs:
     - name: Cleanup test environment
       if: always()
       run: |
-        docker-compose down -v
+        docker compose down -v
 
   deploy-staging:
     runs-on: ubuntu-latest
