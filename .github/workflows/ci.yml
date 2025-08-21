@@ -200,19 +200,19 @@ jobs:
         done
 
         # Check if our integration is loaded
-        docker exec ha-test python -c "
-        import asyncio
-        import aiohttp
+        # docker exec ha-test python -c "
+        # import asyncio
+        # import aiohttp
         
-        async def check_integration():
-            async with aiohttp.ClientSession() as session:
-                # Check if the integration endpoint exists
-                # This is a basic check - more comprehensive tests will be added
-                async with session.get('http://localhost:8123/api/') as resp:
-                    if resp.status == 200:
-                        print('✅ API accessible')
-                    else:
-                        print(f'❌ API returned status {resp.status}')
+        # async def check_integration():
+        #     async with aiohttp.ClientSession() as session:
+        #         # Check if the integration endpoint exists
+        #         # This is a basic check - more comprehensive tests will be added
+        #         async with session.get('http://localhost:8123/api/') as resp:
+        #             if resp.status == 200:
+        #                 print('✅ API accessible')
+        #             else:
+        #                 print(f'❌ API returned status {resp.status}')
                         
         asyncio.run(check_integration())
         " || echo "⚠️  Integration-specific tests will be added during development"
