@@ -214,8 +214,8 @@ jobs:
         #             else:
         #                 print(f'❌ API returned status {resp.status}')
                         
-        asyncio.run(check_integration())
-        " || echo "⚠️  Integration-specific tests will be added during development"
+        #asyncio.run(check_integration())
+        #" || echo "⚠️  Integration-specific tests will be added during development"
 
         # Clean up
         docker stop ha-test
