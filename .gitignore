@@ -53,3 +53,5 @@ mosquitto/log/*
 # OS
 .DS_Store
 Thumbs.db
+config/home-assistant.log
+config/home-assistant.log.*

@@ -51,15 +51,15 @@ setup:
 
 # Start development services
 dev-up:
-	docker-compose up -d
+	docker compose up -d
 
 # Start with full development tools
 dev-up-full:
-	docker-compose --profile dev --profile mqtt --profile database up -d
+	docker compose --profile dev --profile mqtt --profile database up -d
 
 # Stop development services
 dev-down:
-	docker-compose down
+	docker compose down
 
 # Install dependencies (use venv)
 install:
@@ -112,7 +112,7 @@ lint:
 
 # Alternative: Use dev-tools container for quality checks
 check-docker:
-	docker-compose --profile dev up -d dev-tools
+	docker compose --profile dev up -d dev-tools
 	docker exec ge-dev-tools sh -c "\
 		pip install black isort pytest homeassistant && \
 		black --check custom_components/ && \
@@ -121,7 +121,7 @@ check-docker:
 
 # Format using dev-tools container
 format-docker:
-	docker-compose --profile dev up -d dev-tools
+	docker compose --profile dev up -d dev-tools
 	docker exec ge-dev-tools sh -c "\
 		pip install black isort && \
 		black custom_components/ && \
@@ -130,18 +130,18 @@ format-docker:
 # Production Commands
 prod-up:
 	@echo "🚀 Starting production environment..."
-	docker-compose -f docker-compose.prod.yml up -d
+	docker compose -f docker-compose.prod.yml up -d
 	@echo "✅ Production services started"
 	@echo "📊 Monitor status: make monitor"
 
 prod-down:
 	@echo "🛑 Stopping production environment..."
-	docker-compose -f docker-compose.prod.yml down
+	docker compose -f docker-compose.prod.yml down
 	@echo "✅ Production services stopped"
 
 # Start production with monitoring
 prod-up-monitoring:
-	docker-compose -f docker-compose.prod.yml --profile monitoring up -d
+	docker compose -f docker-compose.prod.yml --profile monitoring up -d
 
 # Security scan using Trivy
 security-scan:
@@ -155,7 +155,7 @@ backup:
 	@echo "💾 Creating backup..."
 	@mkdir -p backups
 	@timestamp=$(date +%Y%m%d_%H%M%S); \
-	docker-compose -f docker-compose.prod.yml exec -T mariadb \
+	docker compose -f docker-compose.prod.yml exec -T mariadb \
 		mysqldump -u root -p$(cat secrets/db_root_password.txt) homeassistant \
 		> backups/db_backup_$timestamp.sql
 	@docker run --rm -v gridenforcer_ha_config:/source -v $(PWD)/backups:/backup \
@@ -169,14 +169,14 @@ restore:
 		exit 1; \
 	fi
 	@echo "🔄 Restoring from backup: $(BACKUP)"
-	@docker-compose -f docker-compose.prod.yml exec -T mariadb \
+	@docker compose -f docker-compose.prod.yml exec -T mariadb \
 		mysql -u root -p$(cat secrets/db_root_password.txt) homeassistant < $(BACKUP)
 	@echo "✅ Database restored from $(BACKUP)"
 
 # Monitor services
 monitor:
 	@echo "📊 Service Status:"
-	@docker-compose -f docker-compose.prod.yml ps
+	@docker compose -f docker-compose.prod.yml ps
 	@echo ""
 	@echo "🏥 Health Checks:"
 	@docker inspect gridenforcer-ha-prod --format='{{.State.Health.Status}}' 2>/dev/null || echo "❌ Home Assistant: Not running"
@@ -185,17 +185,17 @@ monitor:
 
 # View logs
 logs:
-	docker-compose -f docker-compose.prod.yml logs -f --tail=50
+	docker compose -f docker-compose.prod.yml logs -f --tail=50
 
 # View specific service logs
 logs-ha:
-	docker-compose -f docker-compose.prod.yml logs -f home-assistant
+	docker compose -f docker-compose.prod.yml logs -f home-assistant
 
 logs-db:
-	docker-compose -f docker-compose.prod.yml logs -f mariadb
+	docker compose -f docker-compose.prod.yml logs -f mariadb
 
 logs-mqtt:
-	docker-compose -f docker-compose.prod.yml logs -f mosquitto
+	docker compose -f docker-compose.prod.yml logs -f mosquitto
 
 # Health check all services
 health-check:
@@ -221,8 +221,8 @@ health-check:
 # Clean up Docker resources
 clean:
 	@echo "🧹 Cleaning up Docker resources..."
-	docker-compose down -v
-	docker-compose -f docker-compose.prod.yml down -v
+	docker compose down -v
+	docker compose -f docker-compose.prod.yml down -v
 	docker system prune -f
 	@echo "✅ Cleanup completed"
 
@@ -231,8 +231,8 @@ clean-all:
 	@echo "🗑️  Deep cleaning (WARNING: removes all Docker data)..."
 	@read -p "Are you sure? This will remove all containers, images, and volumes [y/N]: " confirm && \
 	if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then \
-		docker-compose down -v; \
-		docker-compose -f docker-compose.prod.yml down -v; \
+		docker compose down -v; \
+		docker compose -f docker-compose.prod.yml down -v; \
 		docker system prune -a -f --volumes; \
 		echo "✅ Deep clean completed"; \
 	else \
