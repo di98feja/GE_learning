@@ -1,0 +1,109 @@
+# GridEnforcer v0.1.0 Deployment Specification
+# Första taggade version - Docker-centrerad CI/CD pipeline
+
+version: "v0.1.0"
+previous_version: null  # Första version
+deployment_type: "initial_install"
+breaking_changes: false
+requires_restart: true
+
+changes:
+  integration_files:
+    - "all"  # Komplett integration för första gången
+  config_changes:
+    - "initial_configuration"
+    - "price_sensor_setup"  
+    - "fcr_d_inputs_configuration"
+    - "soc_limits_setup"
+  new_features:
+    - "GridEnforcer Energy Management System"
+    - "Sophisticated price calculation with Nord Pool integration"
+    - "FCR-D grid service integration via Flower aggregator"
+    - "Multi-inverter Solax support (up to 3 units)"
+    - "Dynamic price arbitrage with ranking-based thresholds"
+    - "SOC management with automatic calibration"
+    - "Real-time constraint calculation for grid services"
+    - "Comprehensive test suite with pytest"
+    - "Docker-based CI/CD pipeline"
+  bug_fixes: []
+  migration_notes:
+    - "Första installation av GridEnforcer"
+    - "Omfattande konfiguration krävs för initial setup"
+    - "Kräver MQTT broker för FCR-D kommunikation med Flower"
+    - "Stöder svenska elmarknaden via Nord Pool"
+
+dependencies:
+  addons_required:
+    - slug: "core_mosquitto"
+      name: "Mosquitto Broker"
+      min_version: "6.2.1"
+      required: true
+      purpose: "FCR-D kommunikation med Flower aggregator"
+      config_notes:
+        - "Skapa gridenforcer MQTT-användare"
+        - "Inaktivera anonymous access"
+    - slug: "core_ssh"
+      name: "Terminal & SSH"  
+      min_version: "9.6.0"
+      required: false
+      purpose: "Automated deployment och debugging"
+
+  integrations_required:
+    - domain: "nordpool"
+      source: "hacs"
+      required: true
+      purpose: "Svenska elpriser för dynamic arbitrage optimization"
+      config_notes:
+        - "Konfigurera för SE3 prisområde (Göteborg)"
+        - "Aktivera både today och tomorrow priser"
+    - domain: "modbus"
+      source: "core"
+      required: true  
+      purpose: "Kommunikation med Solax växelriktare"
+      config_notes:
+        - "Konfigurera Modbus TCP för varje växelriktare"
+        - "Stöd för G2 och G4 växelriktare"
+
+  python_packages:
+    - name: "numpy"
+      min_version: "1.21.0"
+      purpose: "Price calculation algorithms"
+    - name: "scipy"
+      min_version: "1.7.0" 
+      purpose: "Advanced price optimization and peak detection"
+
+installation_notes:
+  complexity: "high"
+  estimated_time: "30-60 minuter"
+  requires_manual_config: true
+  prerequisites:
+    - "Home Assistant Supervisor installation"
+    - "Solax växelriktare med nätverksanslutning"
+    - "Flower aggregator-konto för FCR-D tjänster"
+    - "HACS installerat för Nord Pool integration"
+
+configuration_steps:
+  - step: 1
+    description: "Installera nödvändiga addons (MQTT Broker)"
+  - step: 2  
+    description: "Installera Nord Pool integration via HACS"
+  - step: 3
+    description: "Konfigurera Modbus för Solax växelriktare"  
+  - step: 4
+    description: "Återställ GridEnforcer backup"
+  - step: 5
+    description: "Konfigurera GridEnforcer integration via UI"
+  - step: 6
+    description: "Verifiera FCR-D kommunikation med Flower"
+
+validation_checks:
+  - "sensor.gridenforcer_inverter_mode existerar och visar korrekt läge"
+  - "number.gridenforcer_soc_backup och soc_max är konfigurerbara"
+  - "select.gridenforcer_operation_mode fungerar (automatic/manual)"
+  - "MQTT-kommunikation med Flower aggregator fungerar"
+  - "Nord Pool priser uppdateras dagligen"
+  - "Solax växelriktare svarar på Modbus-kommandon"
+
+rollback_plan:
+  supported: false  # Första installation, ingen tidigare version
+  alternative: "Avinstallera integration och återställ backup från innan installation"

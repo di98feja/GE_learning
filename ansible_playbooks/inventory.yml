@@ -1,0 +1,41 @@
+# Ansible Inventory för Home Assistant GridEnforcer Deployment
+# 
+# Anpassa denna fil för din Home Assistant installation
+# 
+# Användning:
+#   ansible-playbook -i inventory.yml fetch-ha-config.yml
+
+all:
+  children:
+    home_assistant:
+      hosts:
+        # ANPASSA: Sätt din Home Assistant IP/hostname
+        ha-test-vm:
+          ansible_host: 192.168.122.90  # ← Ändra till din HA IP
+          ansible_port: 22222           # ← SSH port (ofta 22222 för SSH addon)
+          ansible_user: root            # ← Oftast root för SSH addon
+          
+          # ANPASSA: Om du använder SSH-nycklar
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          
+          # ANPASSA: Om du använder lösenord istället
+          # ansible_ssh_pass: "your_ssh_password"
+          
+          # Optional: Supervisor API token för utökad info
+          # supervisor_token: "your_long_lived_access_token"
+        
+        # Lägg till fler HA-instanser här om du har flera
+        # ha-production:
+        #   ansible_host: 192.168.1.101
+        #   ansible_port: 22222
+        #   ansible_user: root
+        #   ansible_ssh_private_key_file: ~/.ssh/id_rsa
+
+  vars:
+    # Globala SSH-inställningar
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+    ansible_python_interpreter: /usr/bin/python3
+    
+    # Timeout-inställningar
+    ansible_ssh_timeout: 30
+    ansible_command_timeout: 60

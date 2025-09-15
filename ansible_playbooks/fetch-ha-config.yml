@@ -1,0 +1,256 @@
+---
+# GridEnforcer Config Discovery Playbook
+# Läser befintlig Home Assistant konfiguration säkert för backup merge
+# 
+# Användning:
+#   ansible-playbook fetch-ha-config.yml -i inventory.yml
+#
+# Efter körning finns befintlig config i: ./fetched_config/
+
+- name: Fetch Home Assistant Configuration for GridEnforcer Deployment
+  hosts: home_assistant
+  gather_facts: no
+  vars:
+    config_dir: "/config"
+    local_fetch_dir: "./fetched_config"
+    
+  tasks:
+    - name: Skapa lokal directory för fetched config
+      local_action:
+        module: file
+        path: "{{ local_fetch_dir }}"
+        state: directory
+        mode: '0755'
+      run_once: true
+    
+    - name: Test SSH connection och HA accessibility
+      ping:
+      register: ping_result
+    
+    - name: Visa connection status
+      debug:
+        msg: "✅ SSH connection till {{ inventory_hostname }} fungerar"
+    
+    - name: Kontrollera att HA config directory existerar
+      stat:
+        path: "{{ config_dir }}"
+      register: config_dir_stat
+      
+    - name: Fail om config directory inte existerar
+      fail:
+        msg: "❌ HA config directory {{ config_dir }} hittades inte!"
+      when: not config_dir_stat.stat.exists
+    
+    - name: Hitta alla konfigurations-filer i root
+      find:
+        paths: "{{ config_dir }}"
+        patterns: 
+          - "*.yaml"
+          - "*.yml" 
+          - "*.json"
+        file_type: file
+        depth: 1
+      register: config_files
+    
+    - name: Visa hittade config filer
+      debug:
+        msg: "Hittade {{ config_files.files | length }} konfigurationsfiler"
+    
+    - name: Fetch viktiga konfigurationsfiler
+      fetch:
+        src: "{{ item.path }}"
+        dest: "{{ local_fetch_dir }}/{{ inventory_hostname }}/"
+        flat: yes
+      loop: "{{ config_files.files }}"
+      when: item.path | basename in [
+        'configuration.yaml',
+        'secrets.yaml', 
+        'automations.yaml',
+        'scenes.yaml',
+        'scripts.yaml',
+        'customize.yaml',
+        'known_devices.yaml',
+        'groups.yaml',
+        'recorder.yaml'
+      ]
+      ignore_errors: yes
+    
+    - name: Kontrollera om custom_components directory existerar
+      stat:
+        path: "{{ config_dir }}/custom_components"
+      register: custom_components_stat
+    
+    - name: Lista befintliga custom_components
+      find:
+        paths: "{{ config_dir }}/custom_components"
+        file_type: directory
+        depth: 1
+      register: existing_integrations
+      when: custom_components_stat.stat.exists
+    
+    - name: Fetch custom_components directory structure
+      fetch:
+        src: "{{ config_dir }}/custom_components"
+        dest: "{{ local_fetch_dir }}/{{ inventory_hostname }}/"
+        flat: no
+      when: custom_components_stat.stat.exists
+      ignore_errors: yes
+    
+    - name: Visa befintliga custom integrations
+      debug:
+        msg: "Befintliga integrations: {{ existing_integrations.files | map(attribute='path') | map('basename') | list }}"
+      when: custom_components_stat.stat.exists and existing_integrations.files | length > 0
+    
+    - name: Kontrollera packages directory
+      stat:
+        path: "{{ config_dir }}/packages"
+      register: packages_stat
+    
+    - name: Fetch packages directory
+      fetch:
+        src: "{{ config_dir }}/packages"
+        dest: "{{ local_fetch_dir }}/{{ inventory_hostname }}/"
+        flat: no
+      when: packages_stat.stat.exists
+      ignore_errors: yes
+    
+    - name: Lista packages
+      find:
+        paths: "{{ config_dir }}/packages"
+        patterns: "*.yaml"
+        recurse: yes
+      register: existing_packages
+      when: packages_stat.stat.exists
+    
+    - name: Visa befintliga packages
+      debug:
+        msg: "Befintliga packages: {{ existing_packages.files | map(attribute='path') | map('basename') | list }}"
+      when: packages_stat.stat.exists and existing_packages.files | length > 0
+    
+    - name: Kontrollera andra viktiga directories
+      stat:
+        path: "{{ config_dir }}/{{ item }}"
+      register: other_dirs
+      loop:
+        - "www"
+        - "themes" 
+        - "blueprints"
+        - "python_scripts"
+        - "deps"
+      ignore_errors: yes
+    
+    - name: Fetch andra directories som existerar
+      fetch:
+        src: "{{ config_dir }}/{{ item.item }}"
+        dest: "{{ local_fetch_dir }}/{{ inventory_hostname }}/"
+        flat: no
+      loop: "{{ other_dirs.results }}"
+      when: item.stat.exists
+      ignore_errors: yes
+    
+    - name: Hämta HA version info
+      uri:
+        url: "http://supervisor/core/info"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ supervisor_token | default('') }}"
+      register: ha_info
+      ignore_errors: yes
+      when: supervisor_token is defined
+    
+    - name: Alternativ HA version detection
+      shell: |
+        if [ -f {{ config_dir }}/.HA_VERSION ]; then
+          cat {{ config_dir }}/.HA_VERSION
+        else
+          echo "unknown"
+        fi
+      register: ha_version_file
+      when: ha_info is failed or supervisor_token is not defined
+    
+    - name: Spara system information
+      local_action:
+        module: copy
+        content: |
+          # Home Assistant System Information
+          # Fetched: {{ ansible_date_time.iso8601 }}
+          
+          hostname: {{ inventory_hostname }}
+          ha_version: {{ ha_info.json.data.version | default(ha_version_file.stdout) | default('unknown') }}
+          supervisor_version: {{ ha_info.json.data.supervisor | default('unknown') }}
+          
+          # Directory Status
+          custom_components_exists: {{ custom_components_stat.stat.exists }}
+          packages_exists: {{ packages_stat.stat.exists }}
+          
+          # Existing Integrations
+          {% if custom_components_stat.stat.exists and existing_integrations.files | length > 0 %}
+          existing_integrations:
+          {% for integration in existing_integrations.files %}
+            - {{ integration.path | basename }}
+          {% endfor %}
+          {% endif %}
+          
+          # Existing Packages  
+          {% if packages_stat.stat.exists and existing_packages.files | length > 0 %}
+          existing_packages:
+          {% for package in existing_packages.files %}
+            - {{ package.path | replace(config_dir + '/packages/', '') }}
+          {% endfor %}
+          {% endif %}
+          
+          # Configuration Files Found
+          config_files_found:
+          {% for file in config_files.files %}
+            - {{ file.path | basename }}
+          {% endfor %}
+        dest: "{{ local_fetch_dir }}/system_info.yml"
+      run_once: true
+
+# Post-task summary som körs lokalt
+- name: Configuration Fetch Summary
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Läs system information
+      slurp:
+        src: "./fetched_config/system_info.yml"
+      register: system_info_content
+    
+    - name: Visa fetch summary
+      debug:
+        msg: |
+          ============================================
+          🎉 Home Assistant Config Fetch Completed!
+          ============================================
+          
+          📁 Fetched data location: ./fetched_config/
+          
+          📋 System Information:
+          {{ system_info_content.content | b64decode }}
+          
+          📝 Nästa steg:
+          1. Kontrollera fetched data: ls -la ./fetched_config/
+          2. Generera merged backup: 
+             python create_ansible_backup.py \
+               --version v0.2.0 \
+               --existing-config-dir ./fetched_config/{{ hostvars[groups['home_assistant'][0]]['inventory_hostname'] }}/ \
+               --output-dir ./deployment/
+          3. Upload och restore backup i Home Assistant
+          
+          ⚠️  VIKTIGT: Denna playbook ändrar INGET på target-systemet!
+          Den läser bara befintlig konfiguration säkert.
+    
+    - name: Kontrollera om GridEnforcer redan existerar
+      stat:
+        path: "./fetched_config/{{ hostvars[groups['home_assistant'][0]]['inventory_hostname'] }}/custom_components/gridenforcer"
+      register: existing_gridenforcer
+    
+    - name: Varning om GridEnforcer redan existerar
+      debug:
+        msg: |
+          ⚠️  VARNING: GridEnforcer verkar redan vara installerat!
+          
+          Du kan fortfarande generera backup för att uppdatera till ny version.
+          Den nya backupen kommer att ersätta befintlig GridEnforcer installation.
+      when: existing_gridenforcer.stat.exists

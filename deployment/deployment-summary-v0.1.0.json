@@ -1,0 +1,52 @@
+{
+  "deployment_info": {
+    "version": "v0.1.0",
+    "deployment_type": "initial_install",
+    "previous_version": null,
+    "created_at": "2025-09-15T09:42:14.995682"
+  },
+  "artifacts": {
+    "manifest_file": {
+      "path": "/home/janne/source/GE_learning/deployment/deployment-manifest-v0.1.0.json",
+      "absolute_path": "/home/janne/source/GE_learning/deployment/deployment-manifest-v0.1.0.json",
+      "size_bytes": 4812
+    },
+    "backup_file": {
+      "path": "/home/janne/source/GE_learning/deployment/gridenforcer-v0.1.0-20250915_094214.tar",
+      "absolute_path": "/home/janne/source/GE_learning/deployment/gridenforcer-v0.1.0-20250915_094214.tar",
+      "size_bytes": 30720,
+      "size_mb": 0.0
+    }
+  },
+  "deployment_instructions": {
+    "manual_deployment": [
+      "1. Överför gridenforcer-v0.1.0-20250915_094214.tar till Home Assistant enhet",
+      "2. Gå till Settings > System > Backups",
+      "3. Klicka 'Restore' och välj backup-filen",
+      "4. Starta om Home Assistant efter restore",
+      "5. Konfigurera GridEnforcer via Settings > Integrations",
+      "6. Kör python_scripts.gridenforcer_verify för att verifiera"
+    ],
+    "automated_deployment": [
+      "SSH deployment kommer i framtida version",
+      "För nu: använd manuell deployment via HA UI"
+    ]
+  },
+  "git_info": {
+    "commit_hash": "b8839757",
+    "branch": "main",
+    "latest_tag": "Last-Docker-based-CI/CD-version",
+    "repository": "https://github.com/di98feja/GE_learning"
+  },
+  "build_info": {
+    "build_system": "local",
+    "build_number": null,
+    "build_time": "2025-09-01T13:45:01.937116"
+  },
+  "debug_info": {
+    "project_root": "/home/janne/source/GE_learning",
+    "manifest_file_absolute": "/home/janne/source/GE_learning/deployment/deployment-manifest-v0.1.0.json",
+    "backup_file_absolute": "/home/janne/source/GE_learning/deployment/gridenforcer-v0.1.0-20250915_094214.tar",
+    "output_dir_absolute": "/home/janne/source/GE_learning/deployment"
+  }
+}

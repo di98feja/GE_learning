@@ -1,0 +1,103 @@
+# GridEnforcer Version Specification Template
+# Kopiera denna fil till vX.Y.Z.yaml och anpassa för din version
+
+version: "vX.Y.Z"  # MÅSTE matcha git tag
+previous_version: "vX.Y.Z-1"  # Föregående version, eller null för första
+deployment_type: "patch_update"  # initial_install | patch_update | minor_update | major_update
+breaking_changes: false  # true om breaking changes som kräver manuell migration
+requires_restart: true   # false om hot-reload är möjlig
+
+changes:
+  integration_files:  # Lista filer som ändrats/lagts till
+    - "sensor.py"
+    - "config_flow.py" 
+    - "manifest.json"
+  config_changes:  # Konfigurationsändringar som behövs
+    - "new_price_threshold_setting"
+    - "updated_fcr_capacity_limits"
+  new_features:  # Nya funktioner för användare
+    - "EV charging integration via MyEnergi Zappi"
+    - "Enhanced price forecasting with weather data"
+  bug_fixes:  # Bugfixar från tidigare versioner
+    - "Fixed SOC calibration drift detection"
+    - "Improved Modbus error handling"
+  migration_notes:  # Instruktioner för användare
+    - "Uppdatering från vX.Y.Z-1 till vX.Y.Z"
+    - "Nya inställningar tillgängliga i configuration"
+
+dependencies:
+  addons_required:  # Home Assistant addons
+    - slug: "core_mosquitto"
+      name: "Mosquitto Broker"
+      min_version: "6.2.1"
+      required: true
+      purpose: "FCR-D kommunikation"
+      config_notes:
+        - "Kontrollera att gridenforcer user finns"
+    # Lägg till nya addons här om behövs
+    
+  integrations_required:  # Home Assistant integrationer
+    - domain: "nordpool"
+      source: "hacs" 
+      required: true
+      purpose: "Elpriser"
+    - domain: "modbus"
+      source: "core"
+      required: true  
+      purpose: "Växelriktare"
+    # Lägg till nya integrationer här
+    
+  python_packages:  # Python-paket (hanteras automatiskt av HA)
+    - name: "numpy"
+      min_version: "1.21.0"
+    - name: "scipy"
+      min_version: "1.7.0"
+    # Lägg till nya paket om integration kräver det
+
+installation_notes:
+  complexity: "low"  # low | medium | high
+  estimated_time: "5-10 minuter"  # Uppskattad deploymenttid
+  requires_manual_config: false  # true om manuell konfiguration krävs
+  prerequisites:  # Vad som krävs innan deployment
+    - "GridEnforcer v0.1.0 eller senare redan installerat"
+    - "Alla dependencies från tidigare version"
+
+configuration_steps:  # Steg-för-steg deployment (om manual krävs)
+  - step: 1
+    description: "Återställ GridEnforcer backup"
+  - step: 2
+    description: "Starta om Home Assistant"  
+  - step: 3
+    description: "Verifiera att nya funktioner fungerar"
+
+validation_checks:  # Kontroller efter deployment
+  - "sensor.gridenforcer_inverter_mode visar korrekt status"
+  - "Alla konfigurerade enheter svarar"
+  - "FCR-D kommunikation fungerar"
+  - "Inga fel i Home Assistant loggar"
+
+rollback_plan:
+  supported: true  # false om rollback inte är möjlig
+  method: "restore_backup"  # restore_backup | manual_downgrade
+  backup_required: "vX.Y.Z-1"  # Vilken backup som krävs för rollback
+  notes:
+    - "Automatisk rollback via backup restore"
+    - "Konfigurationsändringar går förlorade"
+
+# Valfria sektioner för komplexa releases:
+
+# breaking_changes_details:  # Endast för breaking changes
+#   - change: "Removed deprecated sensor names"
+#     impact: "Old automations using deprecated names will break"
+#     migration: "Update automation entity names to new format"
+  
+# performance_notes:  # För betydande prestandaändringar  
+#   improvements:
+#     - "50% faster price calculations"
+#     - "Reduced memory usage for large datasets"
+#   degradations:
+#     - "Increased startup time due to additional validation"
+
+# security_notes:  # För säkerhetsrelaterade ändringar
+#   - "Enhanced MQTT authentication" 
+#   - "Improved input validation for external APIs"
